@@ -249,6 +249,7 @@ static void option_instat_callback(struct urb *urb);
 #define QUECTEL_PRODUCT_BG96			0x0296
 #define QUECTEL_PRODUCT_EP06			0x0306
 #define QUECTEL_PRODUCT_EM12			0x0512
+#define QUECTEL_PRODUCT_EC200S			0x6002
 #define QUECTEL_PRODUCT_RM500Q          0x0800
 #define QUECTEL_PRODUCT_RG801H          0x8101
 
@@ -1109,6 +1110,7 @@ static const struct usb_device_id option_ids[] = {
 	  .driver_info = RSVD(4) },
 	{ USB_DEVICE(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_BG96),
 	  .driver_info = RSVD(4) },
+	{ USB_DEVICE(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_EC200S)},
 	{ USB_DEVICE_AND_INTERFACE_INFO(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_EP06, 0xff, 0xff, 0xff),
 	  .driver_info = RSVD(1) | RSVD(2) | RSVD(3) | RSVD(4) | NUMEP2 },
 	{ USB_DEVICE_AND_INTERFACE_INFO(QUECTEL_VENDOR_ID, QUECTEL_PRODUCT_EP06, 0xff, 0, 0) },
@@ -2090,7 +2092,7 @@ static int option_probe(struct usb_serial *serial,
 			return -ENODEV;
 
 		//Quectel EC25&EC20's interface 4 can be used as USB network device (qmi)
-		if ((idProduct != 0x6026 && idProduct != 0x6120) && serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4)
+		if ((idProduct != 0x6026 && idProduct != 0x6120 && idProduct != QUECTEL_PRODUCT_EC200S) && serial->interface->cur_altsetting->desc.bInterfaceNumber >= 4)
 			return -ENODEV;
 	}
 #endif

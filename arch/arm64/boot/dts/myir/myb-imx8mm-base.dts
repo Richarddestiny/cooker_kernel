@@ -228,7 +228,8 @@
 		 <&pcie0_refclk>;
 	clock-names = "pcie", "pcie_aux", "pcie_phy", "pcie_bus";
 	ext_osc = <1>;
-	status = "okay";
+	//status = "okay";
+	status = "disable";
 };
 
 &sai3 {
@@ -367,7 +368,8 @@
     keep-power-in-suspend;
     // enable-sdio-wakeup;
 	non-removable;
-	status = "okay";
+	//status = "okay";
+	status = "disable";
 };
 
 &usdhc2 {
@@ -587,13 +589,14 @@
 
 	pinctrl_hog: hoggrp {
 			fsl,pins = <
-				MX8MM_IOMUXC_GPIO1_IO09_GPIO1_IO9 0x19
+				MX8MM_IOMUXC_GPIO1_IO09_GPIO1_IO9 0x19   //MIPI power1.8V
 			>;
 	};
 
 	pinctrl_mipi_dsi_en: mipi_dsi_en {
 		fsl,pins = <
-			MX8MM_IOMUXC_GPIO1_IO08_GPIO1_IO8		0x00000116
+			MX8MM_IOMUXC_GPIO1_IO08_GPIO1_IO8		0x00000116  //BL_EN
+			MX8MM_IOMUXC_SAI2_MCLK_GPIO4_IO27      0x19  // MIPI rreset
 		>;
 	};
 	
@@ -888,7 +891,7 @@
 			MX8MM_IOMUXC_SD2_DATA3_USDHC2_DATA3			0x1d6
 			MX8MM_IOMUXC_GPIO1_IO04_USDHC2_VSELECT		0x1d0
 		>;
-	};	
+	};	    
 
 	pinctrl_usdhc3: usdhc3grp {	
 		fsl,pins = <	
@@ -972,18 +975,30 @@
 };
 
 &mipi_dsi {
-	status = "okay";
+//	status = "ok";
 
 	panel@0 {
-		compatible = "toshiba,panel-tc358775";
-		pinctrl-0 = <&pinctrl_mipi_dsi_en>;
-		stby-gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
-		reset-gpio = <&gpio1 13 GPIO_ACTIVE_HIGH>;
+		compatible = "bananapi,lhr050h41";
+		pinctrl-0 = <&pinctrl_mipi_dsi_en>;		
+		reset-gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
 		powergpio-gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
 		dsi-lanes = <4>;
 	};
-
 };
+
+// &mipi_dsi {
+// 	status = "okay";
+
+// 	panel@0 {
+// 		compatible = "toshiba,panel-tc358775";
+// 		pinctrl-0 = <&pinctrl_mipi_dsi_en>;
+// 		stby-gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
+// 		reset-gpio = <&gpio1 13 GPIO_ACTIVE_HIGH>;
+// 		powergpio-gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+// 		dsi-lanes = <4>;
+// 	};
+
+// };
 
 &vpu_g1 {
 	status = "okay";
