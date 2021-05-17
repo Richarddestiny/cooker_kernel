@@ -334,7 +334,7 @@ static int ili9881c_prepare(struct drm_panel *panel)
 	struct ili9881c *ctx = panel_to_ili9881c(panel);
 	struct device *dev = &ctx->dsi->dev;
 	unsigned int i;
-	int ret;
+	int ret = 0;
 
 	if( ctx->reset == NULL || ctx->power_gpio == NULL )
 		return -EIO;
@@ -358,15 +358,19 @@ static int ili9881c_prepare(struct drm_panel *panel)
 	gpiod_set_value(ctx->reset, 1);
 	msleep(120);
 
+#if 0
 	for (i = 0; i < ARRAY_SIZE(ili9881c_init); i++) {
 		const struct ili9881c_instr *instr = &ili9881c_init[i];
 
-		if (instr->op == ILI9881C_SWITCH_PAGE)
-			ret = ili9881c_switch_page(ctx, instr->arg.page);
-		else if (instr->op == ILI9881C_COMMAND)
-			ret = ili9881c_send_cmd_data(ctx, instr->arg.cmd.cmd,
-						      instr->arg.cmd.data);
-
+		for(retry = 0 ; retry < 3; retry++)
+		{
+			if (instr->op == ILI9881C_SWITCH_PAGE)
+				ret = ili9881c_switch_page(ctx, instr->arg.page);
+			else if (instr->op == ILI9881C_COMMAND)
+				ret = ili9881c_send_cmd_data(ctx, instr->arg.cmd.cmd,
+								instr->arg.cmd.data);
+			msleep(10)
+		}
 		if (ret)
 		{
 			dev_err(dev, "count:%d Send cmd:%#x  dta:%#x failed, ret=%d\n",
@@ -386,6 +390,7 @@ static int ili9881c_prepare(struct drm_panel *panel)
 	ret = mipi_dsi_dcs_set_display_on(ctx->dsi);
 	if (ret)
 		return ret;
+#endif
 
 	msleep(5);
 
@@ -395,10 +400,35 @@ static int ili9881c_prepare(struct drm_panel *panel)
 static int ili9881c_enable(struct drm_panel *panel)
 {
 	struct ili9881c *ctx = panel_to_ili9881c(panel);
+	int ret = 0, i = 0;
 
 	msleep(120);
 
-	mipi_dsi_dcs_set_display_on(ctx->dsi);
+	int retry = 0;
+	for (i = 0; i < ARRAY_SIZE(ili9881c_init); i++) {
+	const struct ili9881c_instr *instr = &ili9881c_init[i];
+
+	for(retry = 0 ; retry < 3; retry++)
+	{
+		if (instr->op == ILI9881C_SWITCH_PAGE)
+			ret = ili9881c_switch_page(ctx, instr->arg.page);
+		else if (instr->op == ILI9881C_COMMAND)
+			ret = ili9881c_send_cmd_data(ctx, instr->arg.cmd.cmd,
+							instr->arg.cmd.data);
+	
+	}
+	
+	if (ret)
+	{
+		dev_err(&ctx->dsi->dev, "count:%d Send cmd:%#x  dta:%#x failed, ret=%d\n",
+			i, instr->arg.cmd.cmd, instr->arg.cmd.data, ret);
+		return ret;
+	}
+		
+}
+
+	ret = mipi_dsi_dcs_set_display_on(ctx->dsi);
+		
 	backlight_enable(ctx->backlight);
 
 	return 0;
@@ -440,6 +470,7 @@ static const struct drm_display_mode bananapi_default_mode = {
 	.vsync_start	= 800 + 12,
 	.vsync_end	= 800 + 12 + 4,
 	.vtotal		= 800 + 12 + 4 + 8,
+
 };
 
 static int ili9881c_get_modes(struct drm_panel *panel)
@@ -484,7 +515,6 @@ static const struct drm_panel_funcs ili9881c_funcs = {
 	.get_modes	= ili9881c_get_modes,
 };
 
-
 static int ili9881c_panel_bl_update_status(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
@@ -493,6 +523,7 @@ static int ili9881c_panel_bl_update_status(struct backlight_device *bl)
 	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 
 	ret = mipi_dsi_dcs_set_display_brightness(dsi, bl->props.brightness);
+	dev_err(&dsi->dev, "\n\n!!!%s brightness：%d  ret:%d!!!\n\n", __func__, bl->props.brightness, ret);
 	if (ret < 0)
 		return ret;
 
@@ -584,7 +615,7 @@ static int ili9881c_dsi_probe(struct mipi_dsi_device *dsi)
 	//dsi->mode_flags = MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
 	//	dsi->mode_flags = MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
 	
-	dsi->mode_flags =  MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
+	dsi->mode_flags =  MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_LPM;
 	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->lanes = 4;
 

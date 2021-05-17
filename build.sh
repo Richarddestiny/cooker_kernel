@@ -25,7 +25,7 @@ run_check $? $LINENO makekernel
 
 mkdir -p $FIRMWARE_DIR/modules
 #make O=$OUTPUT_DIR modules_install INSTALL_MOD_PATH=$FIRMWARE_DIR/modules
-make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$FIRMWARE_DIR/modules/strip
+#make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$FIRMWARE_DIR/modules/strip
 make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$ROOTFS_DIR
 
 cp -ub $OUTPUT_DIR/arch/arm64/boot/Image  $FIRMWARE_DIR/
