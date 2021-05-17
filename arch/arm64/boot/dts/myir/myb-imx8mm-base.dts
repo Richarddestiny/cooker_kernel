@@ -975,15 +975,19 @@
 };
 
 &mipi_dsi {
-//	status = "ok";
 
 	panel@0 {
-		compatible = "bananapi,lhr050h41";
-		pinctrl-0 = <&pinctrl_mipi_dsi_en>;		
+		compatible = "yeebo,ili9881c";
+		pinctrl-0 = <&pinctrl_mipi_dsi_en>;
 		reset-gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
 		powergpio-gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
 		dsi-lanes = <4>;
-	};
+		video-mode = <2>;
+		width-mm = <68>;
+		height-mm = <121>;
+		
+		};	
+
 };
 
 // &mipi_dsi {
