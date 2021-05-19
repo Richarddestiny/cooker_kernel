@@ -98,6 +98,17 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
+		reg_wm8904_amp: regulator@4 {
+			compatible = "regulator-fixed";
+			regulator-name = "wm8904-amp";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			gpios = <&gpio5 20 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+			regulator-boot-on;
+			
+		};
+
 	    reg_gpio_wifi: regulator@1 {
             compatible = "regulator-fixed";
             regulator-name = "wifi-pwr";
@@ -113,8 +124,8 @@
 			regulator-name = "ltemodule-pwr";
 			regulator-min-microvolt = <3800000>;
 			regulator-max-microvolt = <3800000>;
-			gpios = <&gpio2 11 GPIO_ACTIVE_HIGH>;
-			enable-active-high;
+			gpios = <&gpio2 11 GPIO_ACTIVE_LOW>;
+			enable-active-low;
 			regulator-boot-on;
 		};
 
@@ -128,13 +139,13 @@
 			regulator-boot-on;
 		};
 
-		reg_m2_power_pad: regulator-m2-power-pad {
+		reg_usb_power_pad: regulator-usb-power-pad {
 			compatible = "regulator-fixed";
-			regulator-name = "M2_POWER_PAD";
+			regulator-name = "usb-power";
 			regulator-min-microvolt = <3300000>;
 			regulator-max-microvolt = <3300000>;
 			enable-active-high;
-			startup-delay-us = <70000>;
+			//startup-delay-us = <70000>;
 			gpio = <&gpio3 25 GPIO_ACTIVE_HIGH>;
 			regulator-always-on;
 			regulator-boot-on;
@@ -150,12 +161,29 @@
 			asrc-controller;
 			gpr = <&gpr>;
 			audio-routing =
+					"Speaker", "LINEOUTR",
+					"Speaker", "LINEOUTL",
+					"Speaker", "audio-amp",
 					"Headphone Jack", "HPOUTL",
 					"Headphone Jack", "HPOUTR",
 					"IN2L", "Line In Jack",
 					"IN2R", "Line In Jack",
 					"Mic Jack", "MICBIAS",
 					"IN1L", "Mic Jack";
+	};
+
+};
+
+&iomuxc {
+	imx8mm-evk {
+               
+	        pinctrl_wm8904_amp: wm8904_amp {
+			fsl,pins = <
+				MX8MM_IOMUXC_I2C4_SCL_GPIO5_IO20        0x20
+				MX8MM_IOMUXC_SAI5_MCLK_GPIO3_IO25   0x19
+				MX8MM_IOMUXC_SD1_STROBE_GPIO2_IO11 	0x19   //4g power3.8
+			>;
+		};
 	};
 
 };
@@ -542,6 +570,7 @@
 		clocks = <&clk IMX8MM_CLK_SAI3>;
 		clock-names = "mclk";
 		wlf,shared-lrclk;
+	
 	};
 
 	rtc: rtc@32 {
@@ -690,8 +719,8 @@
 
 	pinctrl_pcie0: pcie0grp {
 		fsl,pins = <
-			MX8MM_IOMUXC_I2C4_SCL_PCIE1_CLKREQ_B	        0x61          /* open drain, pull up */
-			MX8MM_IOMUXC_GPIO1_IO00_ANAMIX_REF_CLK_32K      0x141
+			// MX8MM_IOMUXC_I2C4_SCL_PCIE1_CLKREQ_B	        0x61          /* open drain, pull up */
+			// MX8MM_IOMUXC_GPIO1_IO00_ANAMIX_REF_CLK_32K      0x141
 			// MX8MM_IOMUXC_SD2_WP_GPIO2_IO20	                0x41
 			// MX8MM_IOMUXC_SAI2_RXFS_GPIO4_IO21	            0x41
 		>;

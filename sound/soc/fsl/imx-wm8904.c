@@ -55,6 +55,8 @@ static const struct snd_soc_dapm_widget imx_wm8904_dapm_widgets[] = {
 	SND_SOC_DAPM_HP("Headphone Jack", NULL),
 	SND_SOC_DAPM_MIC("Mic Jack", NULL),
 	SND_SOC_DAPM_MIC("Line In Jack", NULL),
+	SND_SOC_DAPM_SPK("Speaker", NULL),
+	SND_SOC_DAPM_REGULATOR_SUPPLY("audio-amp", 1, 0),
 };
 
 static int imx_hifi_hw_params(struct snd_pcm_substream *substream,

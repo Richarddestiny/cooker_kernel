@@ -17,6 +17,19 @@ ROOTFS_DIR=$BUILD_PWD/../rootfs_debug
 echo $OUTPUT_DIR
 
 cd $KERNEL_DIR
+
+
+if [ $# -ne 0 ];then
+	echo $1
+	if [ $1 == "menuconfig" ];then
+		LDFLAGS="" CC=$CC  make O=$OUTPUT_DIR  $1
+	elif [ $1 == "saveconfig" ];then
+		LDFLAGS="" CC=$CC  make O=$OUTPUT_DIR  savedefconfig
+		cp $OUTPUT_DIR/defconfig  $KERNEL_DIR/arch/arm64/configs/cooker_imx8mm_defconfig
+
+	fi
+else
+
 #make O=$OUTPUT_DIR myd_imx8mm_defconfig
 make O=$OUTPUT_DIR cooker_imx8mm_defconfig
 
@@ -33,3 +46,5 @@ cp -ub $OUTPUT_DIR/arch/arm64/boot/dts/myir/myb*.dtb $FIRMWARE_DIR/
 
 cp -ub $OUTPUT_DIR/arch/arm64/boot/Image  /tftp
 cp -ub $OUTPUT_DIR/arch/arm64/boot/dts/myir/myb*.dtb /tftp
+
+fi
