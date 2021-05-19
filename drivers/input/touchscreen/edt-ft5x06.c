@@ -1036,6 +1036,35 @@ edt_ft5x06_ts_set_regs(struct edt_ft5x06_ts_data *tsdata)
 	}
 }
 
+static int ili210x_read_reg(struct i2c_client *client, u8 reg, void *buf,
+			    size_t len)
+{
+	struct ili210x *priv = i2c_get_clientdata(client);
+	struct i2c_msg msg[2] = {
+		{
+			.addr	= client->addr,
+			.flags	= 0,
+			.len	= 1,
+			.buf	= &reg,
+		},
+		{
+			.addr	= client->addr,
+			.flags	= I2C_M_RD,
+			.len	= len,
+			.buf	= buf,
+		}
+	};
+
+
+	if (i2c_transfer(client->adapter, msg, 2) != 2) {
+		dev_err(&client->dev, "i2c transfer failed\n");
+		return -EIO;
+	}
+
+
+	return 0;
+}
+
 static int edt_ft5x06_ts_probe(struct i2c_client *client,
 					 const struct i2c_device_id *id)
 {
@@ -1098,6 +1127,20 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client,
 		dev_err(&client->dev, "failed to allocate input device.\n");
 		return -ENOMEM;
 	}
+
+
+	u8 firmware[3] = {0};
+	/* Get firmware version */
+	error = ili210x_read_reg(client, 0x40,
+				 &firmware, sizeof(firmware));
+	if (error) {
+		dev_err(&client->dev, "Failed to get firmware version, err: %d\n",
+			error);
+		return error;
+	}
+
+	dev_err(&client->dev, "111 %d %d %d wake_gpio:%d  st: %d reset:%d st:%d\n",firmware[0], firmware[1], firmware[2],tsdata->wake_gpio, \
+		gpiod_get_value_cansleep(tsdata->wake_gpio), tsdata->reset_gpio, gpiod_get_value_cansleep(tsdata->reset_gpio));
 
 	mutex_init(&tsdata->mutex);
 	tsdata->client = client;

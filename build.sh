@@ -31,7 +31,7 @@ if [ $# -ne 0 ];then
 else
 
 #make O=$OUTPUT_DIR myd_imx8mm_defconfig
-make O=$OUTPUT_DIR cooker_imx8mm_defconfig
+#make O=$OUTPUT_DIR cooker_imx8mm_defconfig
 
 LDFLAGS="" CC=$CC  make O=$OUTPUT_DIR dtbs Image modules -j16
 run_check $? $LINENO makekernel

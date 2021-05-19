@@ -142,6 +142,8 @@ static bool ili210x_report_events(struct ili210x *priv, u8 *touchdata)
 	bool contact = false, touch = false;
 	unsigned int x = 0, y = 0;
 
+	struct i2c_client *client = priv->client;
+
 	for (i = 0; i < priv->max_touches; i++) {
 		if (priv->model == MODEL_ILI210X) {
 			touch = ili210x_touchdata_to_coords(priv, touchdata,
@@ -152,7 +154,7 @@ static bool ili210x_report_events(struct ili210x *priv, u8 *touchdata)
 			if (touch)
 				contact = true;
 		}
-
+		dev_err(&client->dev, "x=%d  y=%d\n", x, y);
 		input_mt_slot(input, i);
 		input_mt_report_slot_state(input, MT_TOOL_FINGER, touch);
 		if (!touch)
@@ -284,16 +286,16 @@ static int ili210x_i2c_probe(struct i2c_client *client,
 	if (IS_ERR(reset_gpio))
 		return PTR_ERR(reset_gpio);
 
-	if (reset_gpio) {
-		error = devm_add_action_or_reset(dev, ili210x_power_down,
-						 reset_gpio);
-		if (error)
-			return error;
+	// if (reset_gpio) {
+	// 	error = devm_add_action_or_reset(dev, ili210x_power_down,
+	// 					 reset_gpio);
+	// 	if (error)
+	// 		return error;
 
-		usleep_range(50, 100);
-		gpiod_set_value_cansleep(reset_gpio, 0);
-		msleep(100);
-	}
+	// 	usleep_range(50, 100);
+	// 	gpiod_set_value_cansleep(reset_gpio, 0);
+	// 	msleep(100);
+	// }
 
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
 	if (!priv)

@@ -62,8 +62,7 @@
                         fsl,pins = <
                                 MX8MM_IOMUXC_GPIO1_IO12_GPIO1_IO12   0x19  //reset pin
                                 MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1      0x19  //interrupt pin
-                                // MX8MM_IOMUXC_I2C3_SCL_I2C3_SCL
-                                // MX8MM_IOMUXC_I2C3_SDA_I2C3_SDA
+                        
                         >;
                 };
                 
@@ -79,30 +78,76 @@
 &i2c3 {
         clock_frequency = <100000>;
         pinctrl-names = "default";
-        status = "disable";
-      
-        ili2131: ili2131@41 {
-	        compatible = "ilitek,ili213x";
-                reg = <0x41>;
-                pinctrl-names = "default";
-                pinctrl-0 = <&ilitek_ili2131_pins>;
-                interrupt-parent = <&gpio4>;
-                interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
-                reset-gpios = <&gpio1 12  GPIO_ACTIVE_LOW>;
-	        touchscreen-size-x=<800>;
-	        touchscreen-size-y=<1280>;
-        };
+        status = "okay";
+     //   pinctrl-1 = <&ilitek_ili2131_pins>;
+     
+        //  ili2131: ili2131@38 { 
+        // compatible = " ilitek,ili210x"; 
+        // reg = <0x38>; 
+        // interrupt-parent = <&gpio4>; 
+        // interrupts = <1 0x0>; 
+        // irq-gpio = <&gpio4 1 0x0>; 
+        // reset-gpio = <&gpio1 12 0x0>;   
+     
+        // }; 
 
-        // ft5x06: ft5x06@41 {
-        // compatible = "edt,edt-ft5406", "edt,edt-ft5x06";
-        // reg = <41>;
-        // pinctrl-names = "default";
-        // pinctrl-0 = <&edt_ft5x06_pins>;
-        // interrupt-parent = <&gpio4>;
-        // interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
-        // reset-gpios = <&gpio1 12  GPIO_ACTIVE_LOW>;
-        // touchscreen-size-x=<1024>;
-        // touchscreen-size-y=<600>;
+
+//          ili2131: ili2131@41 { 
+//         compatible = "tchip,ilitek"; 
+//         reg = <0x41>; 
+//      //   pinctrl-names = "default";
+//       //  pinctrl-0 = <&ilitek_ili2131_pins>;
+
+//         interrupt-parent = <&gpio4>; 
+//         interrupts = <1 0x0>; 
+//         ilitek,irq-gpio = <&gpio4 1 0x0>; 
+//         ilitek,reset-gpio = <&gpio1 12 0x0>; 
+//         // ilitek,vbus = "vcc_i2c"; 
+//         // ilitek,vdd = "vdd"; 
+//         ilitek,name = "ilitek_i2c"; 
+//         }; 
+
+//         ft5x06: ft5x06@38 {
+//         compatible = "edt,edt-ft5406", "edt,edt-ft5x06";
+//         reg = <0x38>;
+//        // pinctrl-names = "default";
+//       //  pinctrl-0 = <&edt_ft5x06_pins>;
+//         interrupt-parent = <&gpio4>;
+//         interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
+//         reset-gpios = <&gpio1 12  GPIO_ACTIVE_LOW>;
+//         touchscreen-size-x=<1024>;
+//         touchscreen-size-y=<600>;
+//         };
+
+      ili2131: ili2131@41 {  
+                pinctrl-names = "default";
+                compatible = "ilitek,ili251x"; 
+                 pinctrl-0 = <&ilitek_ili2131_pins>;
+                reg = <0x41>; 
+                interrupt-parent = <&gpio4>; 
+                interrupts = <1 IRQ_TYPE_EDGE_FALLING>; 
+                reset-gpios = <&gpio1 12 GPIO_ACTIVE_HIGH>;
+
+                touchscreen-min-x = <0>;
+                touchscreen-size-x = <800>;
+                touchscreen-fuzz-x = <800>;
+
+                touchscreen-min-y = <0>;
+                touchscreen-size-y = <1280>;
+               touchscreen-fuzz-y = <1280>;
+         }; 
+
+
+        // ft5x06: ft5x06@38 {
+	//         compatible = "edt,edt-ft5406", "edt,edt-ft5x06";
+        //         reg = <0x38>;
+        //         pinctrl-names = "default";
+        //         pinctrl-0 = <&ilitek_ili2131_pins>;
+        //         interrupt-parent = <&gpio4>;
+        //         interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
+        //         reset-gpios = <&gpio1 12  GPIO_ACTIVE_LOW>;
+	//         touchscreen-size-x=<1024>;
+	//         touchscreen-size-y=<600>;
         // };
 
 };
