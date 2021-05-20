@@ -731,19 +731,32 @@ static int yeebo_panel_probe(struct mipi_dsi_device *dsi)
 	}
 
 
-	memset(&bl_props, 0, sizeof(bl_props));
-	bl_props.type = BACKLIGHT_RAW;
-	bl_props.brightness = 255;
-	bl_props.max_brightness = 255;
+	np = of_parse_phandle(dsi->dev.of_node, "backlight", 0);
+	if (np) {
+		panel->backlight = of_find_backlight_by_node(np);
+		of_node_put(np);
 
-	panel->backlight = devm_backlight_device_register(dev, dev_name(dev),
-							  dev, dsi, &yeebo_bl_ops,
-							  &bl_props);
-	if (IS_ERR(panel->backlight)) {
-		ret = PTR_ERR(panel->backlight);
-		dev_err(dev, "Failed to register backlight (%d)\n", ret);
-		return ret;
+		if (!panel->backlight)
+		{
+			dev_err(dev, "Failed to find backlight!\n");
+			return -EPROBE_DEFER;
+		}
 	}
+
+
+	// memset(&bl_props, 0, sizeof(bl_props));
+	// bl_props.type = BACKLIGHT_RAW;
+	// bl_props.brightness = 255;
+	// bl_props.max_brightness = 255;
+
+	// panel->backlight = devm_backlight_device_register(dev, dev_name(dev),
+	// 						  dev, dsi, &yeebo_bl_ops,
+	// 						  &bl_props);
+	// if (IS_ERR(panel->backlight)) {
+	// 	ret = PTR_ERR(panel->backlight);
+	// 	dev_err(dev, "Failed to register backlight (%d)\n", ret);
+	// 	return ret;
+	// }
 
 	// ret = yeebo_init_regulators(panel);
 	// if (ret)

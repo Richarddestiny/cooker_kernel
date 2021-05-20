@@ -347,10 +347,8 @@ static int ilitek_i2c_transfer(struct i2c_msg *msgs, int cnt)
 #endif
 #endif
 
-tp_log_err("ilitek_i2c_transfer %s %d %d %d \n", __func__, __LINE__,count, cnt);
 	while (count >= 0) {
 		count -= 1;
-		tp_log_err("ilitek_i2c_transfer %s %d %d %d\n", __func__, __LINE__,count, cnt);
 		ret = i2c_transfer(client->adapter, msgs, cnt);
 		if (ret < 0) {
 			tp_log_err("ilitek_i2c_transfer err\n");
@@ -412,8 +410,8 @@ int ilitek_i2c_write_and_read(uint8_t *cmd, int write_len, int delay, uint8_t *d
 			if (ret < 0)
 				return ret;
 		}
-		if (delay > 0)
-			mdelay(delay);
+		//  if (delay > 0)
+		//  	msleep(delay);
 		if (read_len > 0) {
 			ret = ilitek_i2c_transfer(msgs + 1, 1);
 			if (ret < 0)
@@ -461,25 +459,25 @@ void ilitek_reset(int delay, bool boot)
 
 #else
 
-	if (ilitek_data->reset_gpio >= 0) {
-#if ILITEK_PLAT != ILITEK_PLAT_MTK
-		gpio_direction_output(ilitek_data->reset_gpio, 1);
-		mdelay(10);
-		gpio_direction_output(ilitek_data->reset_gpio, 0);
-		mdelay(10);
-		gpio_direction_output(ilitek_data->reset_gpio, 1);
-		mdelay(delay);
-#else
-		tpd_gpio_output(ilitek_data->reset_gpio, 1);
-		mdelay(10);
-		tpd_gpio_output(ilitek_data->reset_gpio, 0);
-		mdelay(10);
-		tpd_gpio_output(ilitek_data->reset_gpio, 1);
-		mdelay(delay);
-#endif
-	} else {
-		tp_log_err("reset pin is invalid\n");
-	}
+// 	if (ilitek_data->reset_gpio >= 0) {
+// #if ILITEK_PLAT != ILITEK_PLAT_MTK
+// 		gpio_direction_output(ilitek_data->reset_gpio, 1);
+// 		mdelay(10);
+// 		gpio_direction_output(ilitek_data->reset_gpio, 0);
+// 		mdelay(10);
+// 		gpio_direction_output(ilitek_data->reset_gpio, 1);
+// 		mdelay(delay);
+// #else
+// 		tpd_gpio_output(ilitek_data->reset_gpio, 1);
+// 		mdelay(10);
+// 		tpd_gpio_output(ilitek_data->reset_gpio, 0);
+// 		mdelay(10);
+// 		tpd_gpio_output(ilitek_data->reset_gpio, 1);
+// 		mdelay(delay);
+// #endif
+// 	} else {
+// 		tp_log_err("reset pin is invalid\n");
+// 	}
 
 	if(init_stats)
 		ilitek_irq_enable();
@@ -1753,8 +1751,8 @@ int ilitek_main_probe(struct ilitek_ts_data *ilitek_ts_data)
 //#if ILITEK_PLAT != ILITEK_PLAT_MTK
 	tp_log_info("default client->addr = 0x%x client->irq = %d\n", ilitek_data->client->addr, ilitek_data->client->irq);
 //#endif
-	if (ilitek_data->client->addr != 0x38)
-		ilitek_data->client->addr = 0x38;
+	// if (ilitek_data->client->addr != 0x38)
+	// 	ilitek_data->client->addr = 0x38;
 	mutex_init(&ilitek_data->ilitek_mutex);
 	ilitek_data->unhandle_irq = false;
 #ifdef ILITEK_TUNING_NODE
@@ -1766,8 +1764,8 @@ int ilitek_main_probe(struct ilitek_ts_data *ilitek_ts_data)
 	ret = ilitek_power_on(true);
 	ret = ilitek_request_gpio();
 	ilitek_reset(1000 , true);
-		tp_log_info("ilitek_reset\n");
-		goto read_info_err;
+	tp_log_info("ilitek_reset\n");
+		
 	ret = api_protocol_init_func();
 
 	if (ret < 0) {
@@ -1775,6 +1773,7 @@ int ilitek_main_probe(struct ilitek_ts_data *ilitek_ts_data)
 		goto read_info_err;
 	}
 	ret = ilitek_read_tp_info(true);
+		
 #ifdef ILITEK_USE_MTK_INPUT_DEV
 	ilitek_data->input_dev = tpd->dev;
 #else

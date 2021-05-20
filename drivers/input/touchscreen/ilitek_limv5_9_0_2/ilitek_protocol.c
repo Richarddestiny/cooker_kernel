@@ -623,7 +623,7 @@ int api_protocol_set_testmode(bool testmode)
 		if (api_protocol_set_cmd(SET_MOD_CTRL, inbuf, NULL) < 0) {
 			return ILITEK_FAIL;
 		}
-		mdelay(100);
+	//	mdelay(100);
 	}
 	return ILITEK_SUCCESS;
 }
@@ -651,7 +651,7 @@ int api_protocol_init_func(void){
 		return ILITEK_FAIL;
 	}
 
-
+	
 	if(ilitek_data->ptl.ver_major == 0x3 || ilitek_data->ptl.ver == BL_V1_6 || ilitek_data->ptl.ver == BL_V1_7) {
 		ilitek_data->ptl.flag = PTL_V3;
 		tp_log_info("command protocol: PROTOCOL_CMD_NUM_V3\n");

@@ -2041,8 +2041,7 @@ int i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 	ret = __i2c_lock_bus_helper(adap);
 	if (ret)
 		return ret;
-		if(msgs->addr == 0x38)
-			dev_err(&adap->dev, "I2C level transfers not supported %#x %d  %#x %d\n", msgs->addr,msgs->len, msgs->buf[0], num);
+	
 	ret = __i2c_transfer(adap, msgs, num);
 	i2c_unlock_bus(adap, I2C_LOCK_SEGMENT);
 

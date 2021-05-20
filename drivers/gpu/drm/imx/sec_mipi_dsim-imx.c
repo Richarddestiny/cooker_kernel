@@ -117,8 +117,6 @@ static int imx_sec_dsim_encoder_helper_atomic_check(struct drm_encoder *encoder,
 
 	num_bus_formats = display_info->num_bus_formats;
 
-	dev_err(dsim_dev->dev, "num_buf_formats:%d!!\n\n", display_info->num_bus_formats);
-
 	if (unlikely(!num_bus_formats))
 		dev_warn(dsim_dev->dev, "no bus formats assigned by connector\n");
 
