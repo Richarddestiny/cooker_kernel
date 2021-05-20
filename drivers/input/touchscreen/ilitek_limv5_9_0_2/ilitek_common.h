@@ -321,6 +321,12 @@ struct ilitek_ts_data {
 	int tp_max_y;
 	int tp_min_x;
 	int tp_min_y;
+	bool swap_x_y;
+	bool revert_x;
+	bool revert_y;
+	bool use_lcm_resolution;
+	int lcm_max_x;
+	int lcm_max_y;
 	int screen_max_x;
 	int screen_max_y;
 	int screen_min_x;
