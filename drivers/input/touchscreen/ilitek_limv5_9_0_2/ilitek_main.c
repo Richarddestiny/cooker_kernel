@@ -517,8 +517,12 @@ static int ilitek_set_input_param(void)
 	int ret = 0;
 	int i = 0;
 	struct input_dev *input = ilitek_data->input_dev;
+	struct device *dev = &ilitek_data->client->dev;
 
 	tp_log_debug("ilitek_set_input_param\n");
+
+
+
 #ifdef ILITEK_USE_MTK_INPUT_DEV
 #ifndef MTK_UNDTS
 	if (tpd_dts_data.use_tpd_button) {
@@ -531,23 +535,72 @@ static int ilitek_set_input_param(void)
 	input->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 	input->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
 
-#if !ILITEK_ROTATE_FLAG
-#ifdef ILITEK_USE_LCM_RESOLUTION
-	input_set_abs_params(input, ABS_MT_POSITION_X, 0, TOUCH_SCREEN_X_MAX, 0, 0);
-	input_set_abs_params(input, ABS_MT_POSITION_Y, 0, TOUCH_SCREEN_Y_MAX, 0, 0);
-#else
-	input_set_abs_params(input, ABS_MT_POSITION_X, ilitek_data->screen_min_x, ilitek_data->screen_max_x, 0, 0);
-	input_set_abs_params(input, ABS_MT_POSITION_Y, ilitek_data->screen_min_y, ilitek_data->screen_max_y, 0, 0);
-#endif
-#else
-#ifdef ILITEK_USE_LCM_RESOLUTION
-	input_set_abs_params(input, ABS_MT_POSITION_X, 0, TOUCH_SCREEN_Y_MAX, 0, 0);
-	input_set_abs_params(input, ABS_MT_POSITION_Y, 0, TOUCH_SCREEN_X_MAX, 0, 0);
-#else
-	input_set_abs_params(input, ABS_MT_POSITION_X, ilitek_data->screen_min_y, ilitek_data->screen_max_y, 0, 0);
-	input_set_abs_params(input, ABS_MT_POSITION_Y, ilitek_data->screen_min_x, ilitek_data->screen_max_x, 0, 0);
-#endif
-#endif
+// #if !ILITEK_ROTATE_FLAG
+// #ifdef ILITEK_USE_LCM_RESOLUTION
+// 	input_set_abs_params(input, ABS_MT_POSITION_X, 0, TOUCH_SCREEN_X_MAX, 0, 0);
+// 	input_set_abs_params(input, ABS_MT_POSITION_Y, 0, TOUCH_SCREEN_Y_MAX, 0, 0);
+// #else
+// 	input_set_abs_params(input, ABS_MT_POSITION_X, ilitek_data->screen_min_x, ilitek_data->screen_max_x, 0, 0);
+// 	input_set_abs_params(input, ABS_MT_POSITION_Y, ilitek_data->screen_min_y, ilitek_data->screen_max_y, 0, 0);
+// #endif
+// #else
+// #ifdef ILITEK_USE_LCM_RESOLUTION
+// 	input_set_abs_params(input, ABS_MT_POSITION_X, 0, TOUCH_SCREEN_Y_MAX, 0, 0);
+// 	input_set_abs_params(input, ABS_MT_POSITION_Y, 0, TOUCH_SCREEN_X_MAX, 0, 0);
+// #else
+// 	input_set_abs_params(input, ABS_MT_POSITION_X, ilitek_data->screen_min_y, ilitek_data->screen_max_y, 0, 0);
+// 	input_set_abs_params(input, ABS_MT_POSITION_Y, ilitek_data->screen_min_x, ilitek_data->screen_max_x, 0, 0);
+// #endif
+// #endif
+	ilitek_data->swap_x_y =  device_property_read_bool(dev, "touchscreen-swapped-x-y");
+	ilitek_data->use_lcm_resolution = device_property_read_bool(dev, "touchscreen-lcm-resolution");
+	ilitek_data->revert_x = device_property_read_bool(dev, "touchscreen-revert-x");
+	ilitek_data->revert_y = device_property_read_bool(dev, "touchscreen-revert-y");
+
+		if( ilitek_data->use_lcm_resolution == true )
+		{			
+			ret = device_property_read_u32(dev, "touchscreen-lcm-resolution-x", &ilitek_data->lcm_max_x);
+			if (ret) {
+				tp_log_err("use lcm resolution, need \"touchscreen-lcm-resolution-x\"\n");
+				return false;
+			}
+			ret = device_property_read_u32(dev, "touchscreen-lcm-resolution-y", &ilitek_data->lcm_max_y);
+			if (ret) {
+				tp_log_err("use lcm resolution, need \"touchscreen-lcm-resolution-y\"\n");
+				return false;
+			}
+
+			if( ilitek_data->swap_x_y == true )
+			{
+				input_set_abs_params(input, ABS_MT_POSITION_X, 0, ilitek_data->lcm_max_y, 0, 0);
+				input_set_abs_params(input, ABS_MT_POSITION_Y, 0, ilitek_data->lcm_max_x, 0, 0);
+				tp_log_info("UsedLCM resolution, x: %d y:%d!\n",  ilitek_data->lcm_max_y, ilitek_data->lcm_max_x);	
+			}
+			else
+			{
+				input_set_abs_params(input, ABS_MT_POSITION_X, 0, ilitek_data->lcm_max_x, 0, 0);
+				input_set_abs_params(input, ABS_MT_POSITION_Y, 0, ilitek_data->lcm_max_y, 0, 0);
+				tp_log_info("UsedLCM resolution, x: %d y:%d!\n",  ilitek_data->lcm_max_x, ilitek_data->lcm_max_y);	
+			}
+		
+		}
+		else
+		{
+			if( ilitek_data->swap_x_y == true )
+			{
+				input_set_abs_params(input, ABS_MT_POSITION_X, ilitek_data->screen_min_y, ilitek_data->screen_max_y, 0, 0);
+				input_set_abs_params(input, ABS_MT_POSITION_Y, ilitek_data->screen_min_x, ilitek_data->screen_max_x, 0, 0);
+				tp_log_info("Used TP resolution, x: %d y:%d!\n",   ilitek_data->screen_max_y, ilitek_data->screen_max_x);	
+			}
+			else	
+			{	
+				input_set_abs_params(input, ABS_MT_POSITION_X, ilitek_data->screen_min_x, ilitek_data->screen_max_x, 0, 0);
+				input_set_abs_params(input, ABS_MT_POSITION_Y, ilitek_data->screen_min_y, ilitek_data->screen_max_y, 0, 0);
+				tp_log_info("Used TP resolution, x: %d y:%d!\n",   ilitek_data->screen_max_x, ilitek_data->screen_max_y);	
+			}
+			
+		}
+
 	input_set_abs_params(input, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);
 	input_set_abs_params(input, ABS_MT_WIDTH_MAJOR, 0, 255, 0, 0);
 
@@ -588,25 +641,33 @@ static int ilitek_touch_down(int id, int x, int y, int p, int h, int w)
 	struct input_dev *input = ilitek_data->input_dev;
 	if (y != ILITEK_RESOLUTION_MAX) {
 
-#if defined(ILITEK_USE_MTK_INPUT_DEV) || defined(ILITEK_USE_LCM_RESOLUTION)
-		x = (x - ilitek_data->screen_min_x) * TOUCH_SCREEN_X_MAX / (ilitek_data->screen_max_x - ilitek_data->screen_min_x);
-		y = (y - ilitek_data->screen_min_y) * TOUCH_SCREEN_Y_MAX / (ilitek_data->screen_max_y - ilitek_data->screen_min_y);
-#endif
+		if( ilitek_data->use_lcm_resolution == true )
+		{
+			x = (x - ilitek_data->screen_min_x) * ilitek_data->lcm_max_x / (ilitek_data->screen_max_x - ilitek_data->screen_min_x);
+			y = (y - ilitek_data->screen_min_y) * ilitek_data->lcm_max_y / (ilitek_data->screen_max_y - ilitek_data->screen_min_y);
+		}
+	
 	}
 	input_report_key(input, BTN_TOUCH, 1);
 #ifdef ILITEK_TOUCH_PROTOCOL_B
 	input_mt_slot(input, id);
 	input_mt_report_slot_state(input, MT_TOOL_FINGER, true);
 #endif
-#if !ILITEK_ROTATE_FLAG
-	input_event(input, EV_ABS, ABS_MT_POSITION_X, x);
-	input_event(input, EV_ABS, ABS_MT_POSITION_Y, y);
-#else
-	input_event(input, EV_ABS, ABS_MT_POSITION_X, y);
-	input_event(input, EV_ABS, ABS_MT_POSITION_Y, x);
-#endif
+
+	if( ilitek_data->swap_x_y == true )
+	{
+		input_event(input, EV_ABS, ABS_MT_POSITION_X, y);
+		input_event(input, EV_ABS, ABS_MT_POSITION_Y, x);
+	}
+	else
+	{
+		input_event(input, EV_ABS, ABS_MT_POSITION_X, x);
+		input_event(input, EV_ABS, ABS_MT_POSITION_Y, y);
+	}
+
 	input_event(input, EV_ABS, ABS_MT_TOUCH_MAJOR, h);
 	input_event(input, EV_ABS, ABS_MT_TOUCH_MAJOR, w);
+
 #ifdef ILITEK_REPORT_PRESSURE
 	input_event(input, EV_ABS, ABS_MT_PRESSURE, p);
 #endif
@@ -991,9 +1052,9 @@ int ilitek_read_data_and_report_3XX(void)
 								buf[0], buf[i * 5 + 1], buf[i * 5 + 2], buf[i * 5 + 3], buf[i * 5 + 4], buf[i * 5 + 5]);
 					} else {
 						ilitek_data->is_touched = true;
-						if (ILITEK_REVERT_X)
+						if (ilitek_data->revert_x == true)
 							x = ilitek_data->screen_max_x - x + ilitek_data->screen_min_x;
-						if (ILITEK_REVERT_Y)
+						if (ilitek_data->revert_y == true)
 							y = ilitek_data->screen_max_y - y + ilitek_data->screen_min_y;
 						tp_log_debug("Point, ID=%02X, X=%04d, Y=%04d\n", i, x, y);
 						ilitek_touch_down(i, x, y, 10, 128, 1);
@@ -1162,10 +1223,10 @@ int ilitek_read_data_and_report_6XX(void) {
 					}
 					else {
 						ilitek_data->is_touched = true;
-						if (ILITEK_REVERT_X) {
+						if (ilitek_data->revert_x == true) {
 							ilitek_data->tp[i].x = ilitek_data->screen_max_x - ilitek_data->tp[i].x + ilitek_data->screen_min_x;
 						}
-						if (ILITEK_REVERT_Y) {
+						if (ilitek_data->revert_y == true) {
 							ilitek_data->tp[i].y = ilitek_data->screen_max_y - ilitek_data->tp[i].y + ilitek_data->screen_min_y;
 						}
 						tp_log_debug("Point, ID=%02X, X=%04d, Y=%04d, P=%d, H=%d, W=%d\n",
