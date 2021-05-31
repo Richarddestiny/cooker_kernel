@@ -1334,7 +1334,7 @@ int hex_mapping_convert(uint32_t addr,uint8_t *buffer) {
 	}
 	tp_log_info("\nhex ic type:");
 	hex_icaddr_start = addr + HEX_KERNEL_VERSION_ADDRESS;
-	tp_log_info("\nhex End address:0x%x\n", sizeof(buffer)); 
+	tp_log_info("\nhex End address:0x%lx\n", sizeof(buffer)); 
 	for(count = hex_icaddr_start, index = 0; count < hex_icaddr_start + HEX_KERNEL_VERSION_SIZE; count++,index++)
 	{
 		printk("0x%x,", buffer[count]);

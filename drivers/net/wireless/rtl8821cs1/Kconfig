@@ -1,0 +1,4 @@
+config SDIO_WIFI_BL8821CS1
+	tristate "B-Link Realtek 8821C SDIO WiFi"
+	---help---
+	  Help message of RTL8821CS

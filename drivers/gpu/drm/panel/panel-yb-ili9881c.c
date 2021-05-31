@@ -358,6 +358,7 @@ static int yeebo_panel_push_cmd_list(struct mipi_dsi_device *dsi)
 	return ret;
 };
 
+#if 0
 static int color_format_from_dsi_format(enum mipi_dsi_pixel_format format)
 {
 	switch (format) {
@@ -372,11 +373,11 @@ static int color_format_from_dsi_format(enum mipi_dsi_pixel_format format)
 		return COL_FMT_24BPP; /* for backward compatibility */
 	}
 };
+#endif
 
 static int yeebo_panel_prepare(struct drm_panel *panel)
 {
 	struct yeebo_panel *yeebo = to_yeebo_panel(panel);
-	int ret;
 
 	if (yeebo->prepared)
 		return 0;
@@ -410,7 +411,6 @@ static int yeebo_panel_prepare(struct drm_panel *panel)
 static int yeebo_panel_unprepare(struct drm_panel *panel)
 {
 	struct yeebo_panel *yeebo = to_yeebo_panel(panel);
-	int ret;
 
 	if (!yeebo->prepared)
 		return 0;
@@ -440,7 +440,7 @@ static int yeebo_panel_enable(struct drm_panel *panel)
 	struct yeebo_panel *yeebo = to_yeebo_panel(panel);
 	struct mipi_dsi_device *dsi = yeebo->dsi;
 	struct device *dev = &dsi->dev;
-	int color_format = color_format_from_dsi_format(dsi->format);
+	//int color_format = color_format_from_dsi_format(dsi->format);
 	int ret;
 
 	if (yeebo->enabled)
@@ -464,7 +464,9 @@ static int yeebo_panel_enable(struct drm_panel *panel)
 	ret = mipi_dsi_dcs_set_display_on(dsi);
 	if (ret)
 		return ret;
-	DRM_DEV_ERROR(dev, "yeebo_panel_enable success!\n", ret);
+
+	DRM_DEV_INFO(dev, "yeebo_panel_enable success!\n");
+	
 	msleep(5);
 
 	// /* Select User Command Set table (CMD1) */
@@ -654,6 +656,8 @@ static const char * const yeebo_supply_names[] = {
 	"v1p8",
 };
 
+
+#if 0
 static int yeebo_init_regulators(struct yeebo_panel *yeebo)
 {
 	struct device *dev = &yeebo->dsi->dev;
@@ -670,15 +674,16 @@ static int yeebo_init_regulators(struct yeebo_panel *yeebo)
 
 	return devm_regulator_bulk_get(dev, yeebo->num_supplies, yeebo->supplies);
 };
+#endif
 
 static int yeebo_panel_probe(struct mipi_dsi_device *dsi)
 {
 	struct device *dev = &dsi->dev;
 	struct device_node *np = dev->of_node;
 	struct yeebo_panel *panel;
-	struct backlight_properties bl_props;
+//	struct backlight_properties bl_props;
 	int ret;
-	u32 video_mode;
+//	u32 video_mode;
 
 	panel = devm_kzalloc(&dsi->dev, sizeof(*panel), GFP_KERNEL);
 	if (!panel)

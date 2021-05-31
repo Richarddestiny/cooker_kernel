@@ -43,21 +43,11 @@
                
 	        pinctrl_wm8904_amp: wm8904_amp {
 			fsl,pins = <
-				MX8MM_IOMUXC_SAI5_RXD2_GPIO3_IO23       0x19
+				MX8MM_IOMUXC_SAI5_RXD2_GPIO3_IO23       0x19 //+5V poweron
 			>;
 		};
-	};
+                
 
-};
-
-&pwm1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_pwm1>;
-	status = "okay";
-};
-
-&iomuxc {
-	imx8mm-evk {
                 ilitek_ili2131_pins:pinctrl_ili2131grp {
                         fsl,pins = <
                                 MX8MM_IOMUXC_GPIO1_IO12_GPIO1_IO12   0x19  //reset pin
@@ -69,9 +59,17 @@
                 pinctrl_mipi_dsi_en: mipi_dsi_en {
 		fsl,pins = <
 			MX8MM_IOMUXC_SAI2_MCLK_GPIO4_IO27  0x19        0x00000116 //reset
+                     
 		>;
+	        };
 	};
-	};
+
+};
+
+&pwm1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pwm1>;
+	status = "okay";
 };
 
 /* touch */
@@ -95,8 +93,8 @@
         touchscreen-swapped-x-y;
         touchscreen-revert-y;
         touchscreen-lcm-resolution;
-        touchscreen-lcm-resolution-x = <1280>;
-        touchscreen-lcm-resolution-y = <800>;
+        touchscreen-lcm-resolution-x = <800>;
+        touchscreen-lcm-resolution-y = <1280>;
 
         }; 
 };
@@ -108,5 +106,6 @@
 	compatible = "yeebo,ili9881c";
 	reg = <0>;
 	backlight = <&mipi_backlight0>;
+        keep-power-in-suspend;
         };
 };

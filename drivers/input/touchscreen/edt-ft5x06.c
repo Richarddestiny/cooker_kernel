@@ -1039,7 +1039,6 @@ edt_ft5x06_ts_set_regs(struct edt_ft5x06_ts_data *tsdata)
 static int ili210x_read_reg(struct i2c_client *client, u8 reg, void *buf,
 			    size_t len)
 {
-	struct ili210x *priv = i2c_get_clientdata(client);
 	struct i2c_msg msg[2] = {
 		{
 			.addr	= client->addr,
@@ -1074,6 +1073,7 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client,
 	unsigned long irq_flags;
 	int error;
 	char fw_version[EDT_NAME_LEN];
+	u8 firmware[3] = {0};
 
 	dev_dbg(&client->dev, "probing for EDT FT5x06 I2C\n");
 
@@ -1128,8 +1128,6 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client,
 		return -ENOMEM;
 	}
 
-
-	u8 firmware[3] = {0};
 	/* Get firmware version */
 	error = ili210x_read_reg(client, 0x40,
 				 &firmware, sizeof(firmware));
@@ -1138,9 +1136,6 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client,
 			error);
 		return error;
 	}
-
-	dev_err(&client->dev, "111 %d %d %d wake_gpio:%d  st: %d reset:%d st:%d\n",firmware[0], firmware[1], firmware[2],tsdata->wake_gpio, \
-		gpiod_get_value_cansleep(tsdata->wake_gpio), tsdata->reset_gpio, gpiod_get_value_cansleep(tsdata->reset_gpio));
 
 	mutex_init(&tsdata->mutex);
 	tsdata->client = client;
