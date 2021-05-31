@@ -93,8 +93,10 @@
         touchscreen-swapped-x-y;
         touchscreen-revert-y;
         touchscreen-lcm-resolution;
+
         touchscreen-lcm-resolution-x = <800>;
         touchscreen-lcm-resolution-y = <1280>;
+
 
         }; 
 };
