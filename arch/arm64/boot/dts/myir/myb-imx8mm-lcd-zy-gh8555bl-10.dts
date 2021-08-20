@@ -1,0 +1,158 @@
+/*
+ * Copyright 2021 Cooker Devices
+ */
+
+#include "myb-imx8mm-base.dts"
+
+/{
+     display-subsystem {                                                                                
+         status = "okay";
+	};
+    
+        mipi_backlight0: mipi_backlight@0 {
+                compatible = "pwm-backlight";
+                pwms = <&pwm1 0 1000000 >; /*1KHZ*/
+                enable-gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>; 
+                brightness-levels = < 0  1  2  3  4  5  6  7  8  9
+                                10 11 12 13 14 15 16 17 18 19
+                                20 21 22 23 24 25 26 27 28 29
+                                30 31 32 33 34 35 36 37 38 39
+                                40 41 42 43 44 45 46 47 48 49
+                                50 51 52 53 54 55 56 57 58 59
+                                60 61 62 63 64 65 66 67 68 69
+                                70 71 72 73 74 75 76 77 78 79
+                                80 81 82 83 84 85 86 87 88 89
+                                90 91 92 93 94 95 96 97 98 99
+                                100>;
+                default-brightness-level = <100>;
+        };
+};
+
+&lcdif{
+	max-res = <800>, <1280>;
+	status = "okay";
+};
+
+&iomuxc {
+	imx8mm-evk {
+		pinctrl_pwm1: mipi0pwm1grp {
+			fsl,pins = <
+				MX8MM_IOMUXC_GPIO1_IO01_PWM1_OUT 0x19
+			>;
+		};
+               
+	        pinctrl_wm8904_amp: wm8904_amp {
+			fsl,pins = <
+				MX8MM_IOMUXC_SAI5_RXD2_GPIO3_IO23       0x19 //+5V poweron
+			>;
+		};
+                
+
+                ilitek_ili2131_pins:pinctrl_ili2131grp {
+                        fsl,pins = <
+                                MX8MM_IOMUXC_GPIO1_IO12_GPIO1_IO12   0x19  //reset pin
+                                MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1      0x19  //interrupt pin
+                        
+                        >;
+                };
+                
+                ilitek_ili2131_pins:pinctrl_ili2131grp {
+                        fsl,pins = <
+                                MX8MM_IOMUXC_GPIO1_IO12_GPIO1_IO12   0x19  //reset pin
+                                MX8MM_IOMUXC_SAI1_RXC_GPIO4_IO1      0x19  //interrupt pin
+                        
+                        >;
+                };
+                
+                pinctrl_mipi_dsi_en: mipi_dsi_en {
+		fsl,pins = <
+			MX8MM_IOMUXC_SAI2_MCLK_GPIO4_IO27  0x19        0x00000116 //reset
+                     
+		>;
+	        };
+	};
+
+};
+
+&pwm1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pwm1>;
+	status = "okay";
+};
+
+/* touch */
+&i2c3 {
+        clock_frequency = <400000>;
+        pinctrl-names = "default";
+        status = "okay";
+
+        goodix_ts@14 {/*Goodix BLSP1 QUP5 */
+                compatible = "goodix,gt9xx";
+                                
+                pinctrl-names = "default";
+                pinctrl-0 = <&ilitek_ili2131_pins>;
+                reg = <0x14>;
+                interrupt-parent = <&gpio4>;
+                interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
+              //  vdd_ana-supply = <&pm8226_l19>;
+             //   vcc_i2c-supply = <&pm8226_lvs1>;
+                goodix,rst-gpio = <&gpio1 12 GPIO_ACTIVE_HIGH>; 
+                goodix,irq-gpio = <&gpio4 1 IRQ_TYPE_EDGE_FALLING>; 
+
+                goodix,cfg-group0 = [
+                        42 D0 02 00 05 05 75 01 01 0F 24 
+                        0F 64 3C 03 05 00 00 00 02 00 00 
+                        00 16 19 1C 14 8C 0E 0E 24 00 31 
+                        0D 00 00 00 83 33 1D 00 41 00 00 
+                        00 00 00 08 0A 00 2B 1C 3C 94 D5 
+                        03 08 00 00 04 93 1E 00 82 23 00 
+                        74 29 00 69 2F 00 5F 37 00 5F 20 
+                        40 60 00 F0 40 30 55 50 27 00 00 
+                        00 00 00 00 00 00 00 00 00 00 00 
+                        00 00 00 00 00 00 00 14 19 00 00 
+                        50 50 02 04 06 08 0A 0C 0E 10 12 
+                        14 16 18 1A 1C 00 00 00 00 00 00 
+                        00 00 00 00 00 00 00 00 00 00 1D 
+                        1E 1F 20 21 22 24 26 28 29 2A 1C 
+                        18 16 14 13 12 10 0F 0C 0A 08 06 
+                        04 02 00 00 00 00 00 00 00 00 00 
+                        00 00 00 00 00 00 00 00 9C 01];
+                goodix,cfg-group2 = [
+                        48 D0 02 00 05 05 75 01 01 0F 24 
+                        0F 64 3C 03 05 00 00 00 02 00 00 
+                        00 16 19 1C 14 8C 0E 0E 24 00 31 
+                        0D 00 00 00 83 33 1D 00 41 00 00 
+                        3C 0A 14 08 0A 00 2B 1C 3C 94 D5 
+                        03 08 00 00 04 93 1E 00 82 23 00 
+                        74 29 00 69 2F 00 5F 37 00 5F 20 
+                        40 60 00 F0 40 30 55 50 27 00 00 
+                        00 00 00 00 00 00 00 00 00 00 00 
+                        00 00 00 00 00 00 00 14 19 00 00 
+                        50 50 02 04 06 08 0A 0C 0E 10 12 
+                        14 16 18 1A 1C 00 00 00 00 00 00 
+                        00 00 00 00 00 00 00 00 00 00 1D 
+                        1E 1F 20 21 22 24 26 28 29 2A 1C 
+                        18 16 14 13 12 10 0F 0C 0A 08 06 
+                        04 02 00 00 00 00 00 00 00 00 00 
+                        00 00 00 00 00 00 00 00 3C 01];
+        };
+
+};
+
+&mipi_dsi {
+	status = "okay";
+	panel@0 {
+		compatible = "zhunyi,gh8555bl";
+	//	compatible = "yeebo,yeebo-ili9881c";
+                reg = <0>;
+                pinctrl-0 = <&pinctrl_mipi_dsi_en>;
+		reset-gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
+		powergpio-gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+		dsi-lanes = <4>;
+		video-mode = <2>;
+		width-mm = <68>;
+		height-mm = <121>;
+                backlight = <&mipi_backlight0>;
+                keep-power-in-suspend;
+        };
+};

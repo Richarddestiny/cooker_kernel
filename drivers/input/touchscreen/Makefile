@@ -116,4 +116,4 @@ obj-$(CONFIG_TOUCHSCREEN_RASPBERRYPI_FW)	+= raspberrypi-ts.o
 obj-$(CONFIG_TOUCHSCREEN_IQS5XX)	+= iqs5xx.o
 
 obj-y += ilitek_limv5_9_0_2/
-
+obj-y += goodix/

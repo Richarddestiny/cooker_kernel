@@ -394,6 +394,8 @@ static void fb_flashcursor(struct work_struct *work)
 	int mode;
 	int ret;
 
+	return;
+
 	/* FIXME: we should sort out the unbind locking instead */
 	/* instead we just fail to flash the cursor if we can't get
 	 * the lock instead of blocking fbcon deinit */
@@ -1378,6 +1380,8 @@ static void fbcon_cursor(struct vc_data *vc, int mode)
 	struct fbcon_ops *ops = info->fbcon_par;
 	int y;
  	int c = scr_readw((u16 *) vc->vc_pos);
+
+	return;
 
 	ops->cur_blink_jiffies = msecs_to_jiffies(vc->vc_cur_blink_ms);
 

@@ -12,16 +12,16 @@ ENV_DIR=./../env
 KERNEL_DIR=$BUILD_PWD
 FIRMWARE_DIR=$KERNEL_DIR/../firmware/kernel
 OUTPUT_DIR=$KERNEL_DIR/../output/kernel
-ROOTFS_DIR=$BUILD_PWD/../rootfs_debug
+ROOTFS_DIR=$BUILD_PWD/../rootfs/rootfs
+ROOTFS_DEBUG_DIR=$BUILD_PWD/../rootfs_debug
 
 echo $OUTPUT_DIR
 
 cd $KERNEL_DIR
 
-
 if [ $# -ne 0 ];then
 	echo $1
-	if [ $1 == "menuconfig" ];then
+	if [ $1 == "menuconfig" ] ; then
 		LDFLAGS="" CC=$CC  make O=$OUTPUT_DIR  $1
 	elif [ $1 == "saveconfig" ];then
 		LDFLAGS="" CC=$CC  make O=$OUTPUT_DIR  savedefconfig
@@ -40,7 +40,10 @@ run_check $? $LINENO makekernel
 mkdir -p $FIRMWARE_DIR/modules
 #make O=$OUTPUT_DIR modules_install INSTALL_MOD_PATH=$FIRMWARE_DIR/modules
 #make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$FIRMWARE_DIR/modules/strip
+rm $ROOTFS_DEBUG_DIR/lib/modules/*  -rf
+rm $ROOTFS_DIR/lib/modules/*  -rf
 make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$ROOTFS_DIR
+make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$ROOTFS_DEBUG_DIR
 
 cp -ub $OUTPUT_DIR/arch/arm64/boot/Image  $FIRMWARE_DIR/
 cp -ub $OUTPUT_DIR/arch/arm64/boot/dts/myir/myb*.dtb $FIRMWARE_DIR/

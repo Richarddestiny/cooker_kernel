@@ -239,6 +239,17 @@ static int /*__devinit*/ ilitek_touch_driver_probe(struct i2c_client *client,
 		return -1;
 	}
 
+	if(ilitek_data_init() < 0) {
+		return -ENOMEM;
+	}
+#if ILITEK_PLAT == ILITEK_PLAT_ALLWIN
+	ret = ilitek_init_allwin();
+	if (ret < 0) {
+		tp_log_err("ilitek_init_allwin failed.\n");
+		return -ENODEV;
+	}
+#endif
+
 	ilitek_data->client = client;
 #if ILITEK_PLAT != ILITEK_PLAT_ALLWIN
 #ifdef ILITEK_ENABLE_REGULATOR_POWER_ON
@@ -399,37 +410,32 @@ static int ilitek_init_allwin(void)
 
 #endif
 
-static int __init ilitek_touch_driver_init(void)
-{
-	int ret;
-	if(ilitek_data_init() < 0) {
-		return ILITEK_FAIL;
-	}
-#if ILITEK_PLAT == ILITEK_PLAT_ALLWIN
-	ret = ilitek_init_allwin();
-	if (ret < 0) {
-		tp_log_err("ilitek_init_allwin failed.\n");
-		return -ENODEV;
-	}
-#endif
-	/* register driver */
-	ret = i2c_add_driver(&ilitek_touch_device_driver);
-	if (ret != 0) {
-		tp_log_err("add touch device driver i2c driver failed.so remove\n");
-		i2c_del_driver(&ilitek_touch_device_driver);
-		return -ENODEV;
-	}
-	tp_log_info("add touch device driver i2c driver.\n");
-	return ret;
-}
+// static int __init ilitek_touch_driver_init(void)
+// {
+// 	int ret;
 
-static void __exit ilitek_touch_driver_exit(void)
-{
-	tp_log_info("remove touch device driver i2c driver.\n");
-	i2c_del_driver(&ilitek_touch_device_driver);
-}
-#endif
-module_init(ilitek_touch_driver_init);
-module_exit(ilitek_touch_driver_exit);
+// 	/* register driver */
+// 	ret = i2c_add_driver(&ilitek_touch_device_driver);
+// 	if (ret != 0) {
+// 		tp_log_err("add touch device driver i2c driver failed.so remove\n");
+// 		i2c_del_driver(&ilitek_touch_device_driver);
+// 		return -ENODEV;
+// 	}
+// 	tp_log_info("add touch device driver i2c driver.\n");
+// 	return ret;
+// }
+
+// static void __exit ilitek_touch_driver_exit(void)
+// {
+// 	tp_log_info("remove touch device driver i2c driver.\n");
+// 	i2c_del_driver(&ilitek_touch_device_driver);
+// }
+ #endif
+
+// module_init(ilitek_touch_driver_init);
+// module_exit(ilitek_touch_driver_exit);
+
+module_i2c_driver(ilitek_touch_device_driver);
+
 MODULE_AUTHOR("ILITEK");
 MODULE_LICENSE("GPL v2");

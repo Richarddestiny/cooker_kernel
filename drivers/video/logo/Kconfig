@@ -28,9 +28,12 @@ config LOGO_LINUX_CLUT224
 	bool "Standard 224-color Linux logo"
 	default y
 
-config LOGO_DEC_CLUT224
-	bool "224-color Digital Equipment Corporation Linux logo"
-	depends on MACH_DECSTATION || ALPHA
+config LOGO_LINUX_COOKER_H_CLUT224
+	bool "Standard 224-color Linux cooker horizontal logo"
+	default y
+
+config LOGO_LINUX_COOKER_V_CLUT224
+	bool "Standard 224-color Linux cooker vertical logo"
 	default y
 
 config LOGO_MAC_CLUT224
