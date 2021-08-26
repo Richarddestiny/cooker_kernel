@@ -211,13 +211,13 @@
         #address-cells=<1>;
         #size-cells=<0>;
 
-        spidev@0{
-			#address-cellss=<1>;
-			#size-cells=<1>;
-			compatible = "spidev","rohm,dh2228fv";
-			spi-max-frequency = <20000000>;
-			reg = <0>;
-       };
+        // spidev@0{
+		// 	#address-cellss=<1>;
+		// 	#size-cells=<1>;
+		// 	compatible = "spidev","rohm,dh2228fv";
+		// 	spi-max-frequency = <20000000>;
+		// 	reg = <0>;
+    //    };
 };
 
 &fec1 {
@@ -1001,22 +1001,6 @@
 			remote-endpoint = <&csi1_ep>;
 		};
 	};
-};
-
-&mipi_dsi {
-
-	panel@0 {
-		compatible = "yeebo,ili9881c";
-		pinctrl-0 = <&pinctrl_mipi_dsi_en>;
-		reset-gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
-		powergpio-gpio = <&gpio1 9 GPIO_ACTIVE_HIGH>;
-		dsi-lanes = <4>;
-		video-mode = <2>;
-		width-mm = <68>;
-		height-mm = <121>;
-		
-		};	
-
 };
 
 // &mipi_dsi {

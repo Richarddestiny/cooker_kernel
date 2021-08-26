@@ -37,11 +37,11 @@ else
 LDFLAGS="" CC=$CC  make O=$OUTPUT_DIR dtbs Image modules -j16
 run_check $? $LINENO makekernel
 
-mkdir -p $FIRMWARE_DIR/modules
+sudo mkdir -p $FIRMWARE_DIR/modules
 #make O=$OUTPUT_DIR modules_install INSTALL_MOD_PATH=$FIRMWARE_DIR/modules
 #make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$FIRMWARE_DIR/modules/strip
-rm $ROOTFS_DEBUG_DIR/lib/modules/*  -rf
-rm $ROOTFS_DIR/lib/modules/*  -rf
+sudo rm $ROOTFS_DEBUG_DIR/lib/modules/*  -rf
+sudo rm $ROOTFS_DIR/lib/modules/*  -rf
 make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$ROOTFS_DIR
 make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$ROOTFS_DEBUG_DIR
 

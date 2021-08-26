@@ -10,4 +10,5 @@ dtb-$(CONFIG_ARCH_MXC) +=  myb-imx8mm-base.dtb \
 			   mys-imx8mm-evk-rpmsg.dtb \
 			   mys-imx8mm-lt8912-atk-10-1.dtb \
 			   mys-imx8mm-lt8912-hontron-7.dtb \
-			   myb-imx8mm-lcd-yb-ili9881c-10.dtb
+			   myb-imx8mm-lcd-yb-ili9881c-10.dtb \
+			   myb-imx8mm-lcd-zy-gh8555bl-10.dtb

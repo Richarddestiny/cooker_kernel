@@ -312,6 +312,8 @@ static void goodix_ts_report_touch(struct goodix_ts_data *ts, u8 *coor_data)
 	input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, input_y);
 	input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, input_w);
 	input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, input_w);
+
+	//dev_err(&ts->client->dev, "input_x %d input_y %d input_w %d\n", input_x, input_y, input_w);
 }
 
 /**
@@ -457,7 +459,7 @@ static int set_reset_output_val(struct goodix_ts_data *ts, int val)
 	int ret;
 
 	ret = gpiod_direction_output(ts->gpiod_rst, val);
-#if 0
+
 	if (ts->substitute_i2c_address) {
 		struct i2c_msg msg;
 		unsigned char buf[4];
@@ -474,7 +476,7 @@ static int set_reset_output_val(struct goodix_ts_data *ts, int val)
 		ret = i2c_transfer(ts->client->adapter, &msg, 1);
 		return ret < 0 ? ret : (ret != 1 ? -EIO : 0);
 	}
-#endif
+
 	return ret;
 }
 
@@ -766,29 +768,42 @@ static int goodix_get_gpio_config(struct goodix_ts_data *ts)
 	dev = &ts->client->dev;
 
 	/* Get the interrupt GPIO pin number */
-	gpiod = devm_gpiod_get_optional(dev, GOODIX_GPIO_INT_NAME, GPIOD_IN);
-	if (IS_ERR(gpiod)) {
-		error = PTR_ERR(gpiod);
-		if (error != -EPROBE_DEFER)
-			dev_dbg(dev, "Failed to get %s GPIO: %d\n",
-				GOODIX_GPIO_INT_NAME, error);
-		return error;
+	gpiod = devm_gpiod_get_optional(dev, "irq", GPIOD_IN);
+	if (IS_ERR_OR_NULL(gpiod)) {
+		if( IS_ERR(gpiod) ){
+			error = PTR_ERR(gpiod);
+			if (error != -EPROBE_DEFER)
+				dev_err(dev, "Failed to get %s GPIO: %d\n",
+					GOODIX_GPIO_INT_NAME, error);
+			return error;
+		}
+		else
+		{
+			dev_err(dev, "Failed to get %s GPIO is NULL\n", GOODIX_GPIO_INT_NAME);
+			return -ENXIO;
+		}
 	}
 
 	ts->gpiod_int = gpiod;
 
 	/* Get the reset line GPIO pin number */
-	gpiod = devm_gpiod_get_optional(dev, GOODIX_GPIO_RST_NAME, GPIOD_IN);
-	if (IS_ERR(gpiod)) {
-		error = PTR_ERR(gpiod);
-		if (error != -EPROBE_DEFER)
-			dev_dbg(dev, "Failed to get %s GPIO: %d\n",
-				GOODIX_GPIO_RST_NAME, error);
-		return error;
+	gpiod = devm_gpiod_get_optional(dev, "reset", GPIOD_IN);
+	if (IS_ERR_OR_NULL(gpiod)) {
+		if( IS_ERR(gpiod) ){
+			error = PTR_ERR(gpiod);
+			if (error != -EPROBE_DEFER)
+				dev_dbg(dev, "Failed to get %s GPIO: %d\n",
+					GOODIX_GPIO_RST_NAME, error);
+			return error;
+		}		
+		else {
+			dev_err(dev, "Failed to get %s GPIO is NULL\n", GOODIX_GPIO_RST_NAME);
+			return -ENXIO;
+		}
 	}
 
 	ts->gpiod_rst = gpiod;
-
+	//dev_err(dev, "gpiod_rst %s gpiod_int: %s\n",ts->gpiod_rst->name, ts->gpiod_int->name);
 	error = of_property_read_u32_index(dev->of_node,
 			"substitute-i2c-address",
 				0, &ts->substitute_i2c_address);
@@ -805,6 +820,7 @@ static int goodix_get_gpio_config(struct goodix_ts_data *ts)
 	return 0;
 }
 
+static int goodix_read_version(struct goodix_ts_data *ts);
 /**
  * goodix_read_config - Read the embedded configuration of the panel
  *
@@ -838,6 +854,7 @@ static void goodix_read_config(struct goodix_ts_data *ts)
 		swap(ts->abs_x_max, ts->abs_y_max);
 	ts->int_trigger_type = config[TRIGGER_LOC] & 0x03;
 	ts->max_touch_num = config[MAX_CONTACTS_LOC] & 0x0f;
+	dev_err(&ts->client->dev, "abs_x: %d abs_y:%d trigertype:%#X touch_num:%d\n", ts->abs_x_max, ts->abs_y_max, ts->max_touch_num);
 	if (!ts->abs_x_max || !ts->abs_y_max || !ts->max_touch_num) {
 		dev_err(&ts->client->dev,
 			"Invalid config, using defaults\n");
@@ -880,8 +897,8 @@ static int goodix_read_version(struct goodix_ts_data *ts)
 
 	ts->version = get_unaligned_le16(&buf[4]);
 
-	dev_info(&ts->client->dev, "ID %d, version: %04x\n", ts->id,
-		 ts->version);
+	dev_info(&ts->client->dev, "ID %d, version: %04x irq:%d\n", ts->id,
+		 ts->version, ts->client->irq);
 
 	return 0;
 }
@@ -944,8 +961,8 @@ static int goodix_request_input_dev(struct goodix_ts_data *ts)
 	ts->input_dev->id.vendor = 0x0416;
 	ts->input_dev->id.product = ts->id;
 	ts->input_dev->id.version = ts->version;
-	ts->input_dev->open = goodix_open;
-	ts->input_dev->close = goodix_close;
+	// ts->input_dev->open = goodix_open;
+	// ts->input_dev->close = goodix_close;
 	input_set_drvdata(ts->input_dev, ts);
 
 	/* Capacitive Windows/Home button on some devices */
@@ -1072,12 +1089,12 @@ static void goodix_config_cb(const struct firmware *cfg, void *ctx)
 	struct goodix_ts_data *ts = ctx;
 	int error;
 
-	if (cfg) {
-		/* send device configuration to the firmware */
-		error = goodix_send_cfg(ts, cfg);
-		if (error)
-			goto err_release_cfg;
-	}
+	// if (cfg) {
+	// 	/* send device configuration to the firmware */
+	// 	error = goodix_send_cfg(ts, cfg);
+	// 	if (error)
+	// 		goto err_release_cfg;
+	// }
 
 	error = goodix_configure_dev(ts);
 	if (error)
@@ -1165,7 +1182,9 @@ static int goodix_ts_probe(struct i2c_client *client,
 					&esd_timeout);
 		if (!error)
 			atomic_set(&ts->esd_timeout, esd_timeout);
-
+		
+		goodix_read_config(ts);
+		
 		error = sysfs_create_group(&client->dev.kobj,
 					   &goodix_attr_group);
 		if (error) {
@@ -1175,24 +1194,24 @@ static int goodix_ts_probe(struct i2c_client *client,
 			return error;
 		}
 
-		/* update device config */
-		ts->cfg_name = devm_kasprintf(&client->dev, GFP_KERNEL,
-					      "goodix_%d_cfg.bin", ts->id);
-		if (!ts->cfg_name) {
-			error = -ENOMEM;
-			goto err_sysfs_remove_group;
-		}
+		// /* update device config */
+		// ts->cfg_name = devm_kasprintf(&client->dev, GFP_KERNEL,
+		// 			      "goodix_%d_cfg.bin", ts->id);
+		// if (!ts->cfg_name) {
+		// 	error = -ENOMEM;
+		// 	goto err_sysfs_remove_group;
+		// }
 
-		error = request_firmware_nowait(THIS_MODULE, true, ts->cfg_name,
-						&client->dev, GFP_KERNEL, ts,
-						goodix_config_cb);
-		if (error) {
-			dev_err(&client->dev,
-				"Failed to invoke firmware loader: %d\n",
-				error);
-			goto err_sysfs_remove_group;
-		}
-	} else {
+		// error = request_firmware_nowait(THIS_MODULE, true, ts->cfg_name,
+		// 				&client->dev, GFP_KERNEL, ts,
+		// 				goodix_config_cb);
+		// if (error) {
+		// 	dev_err(&client->dev,
+		// 		"Failed to invoke firmware loader: %d\n",
+		// 		error);
+		// 	goto err_sysfs_remove_group;
+		// }
+	// } else {
 		error = goodix_configure_dev(ts);
 		if (error)
 			return error;
@@ -1377,6 +1396,7 @@ static const struct dev_pm_ops goodix_pm_ops = {
 static const struct i2c_device_id goodix_ts_id[] = {
 	{ "GDIX1001:00", 0 },
 	{ "gt9271", 0 },
+	{ "gt9xx", 0 },
 	{ }
 };
 MODULE_DEVICE_TABLE(i2c, goodix_ts_id);
@@ -1400,6 +1420,7 @@ static const struct of_device_id goodix_of_match[] = {
 	{ .compatible = "goodix,gt9271" },
 	{ .compatible = "goodix,gt928" },
 	{ .compatible = "goodix,gt967" },
+	{ .compatible = "goodix,gt9xx" },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, goodix_of_match);
