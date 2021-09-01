@@ -45,7 +45,7 @@ sudo rm $ROOTFS_DEBUG_DIR/lib/modules/*  -rf
 sudo rm $ROOTFS_DIR/lib/modules/*  -rf
 
 make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$ROOTFS_DEBUG_DIR
-sudo cp $ROOTFS_DIR/lib/modules/* $ROOTFS_DEBUG_DIR/lib/modules/  -a
+sudo cp $ROOTFS_DEBUG_DIR/lib/modules/* $ROOTFS_DIR/lib/modules/  -a
 
 cp -u $OUTPUT_DIR/arch/arm64/boot/Image  $FIRMWARE_DIR/
 cp -u $OUTPUT_DIR/arch/arm64/boot/dts/myir/myb*.dtb $FIRMWARE_DIR/

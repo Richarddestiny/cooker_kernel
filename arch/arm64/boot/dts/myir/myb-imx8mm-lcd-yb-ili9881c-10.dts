@@ -101,6 +101,7 @@
         }; 
 };
 
+
 &mipi_dsi {
 	status = "okay";
 	panel@0 {	
