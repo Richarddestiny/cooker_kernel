@@ -37,18 +37,20 @@ else
 LDFLAGS="" CC=$CC  make O=$OUTPUT_DIR dtbs Image modules -j16
 run_check $? $LINENO makekernel
 
+
 sudo mkdir -p $FIRMWARE_DIR/modules
 #make O=$OUTPUT_DIR modules_install INSTALL_MOD_PATH=$FIRMWARE_DIR/modules
 #make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$FIRMWARE_DIR/modules/strip
 sudo rm $ROOTFS_DEBUG_DIR/lib/modules/*  -rf
 sudo rm $ROOTFS_DIR/lib/modules/*  -rf
-make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$ROOTFS_DIR
+
 make O=$OUTPUT_DIR modules_install INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$ROOTFS_DEBUG_DIR
+sudo cp $ROOTFS_DIR/lib/modules/* $ROOTFS_DEBUG_DIR/lib/modules/  -a
 
-cp -ub $OUTPUT_DIR/arch/arm64/boot/Image  $FIRMWARE_DIR/
-cp -ub $OUTPUT_DIR/arch/arm64/boot/dts/myir/myb*.dtb $FIRMWARE_DIR/
+cp -u $OUTPUT_DIR/arch/arm64/boot/Image  $FIRMWARE_DIR/
+cp -u $OUTPUT_DIR/arch/arm64/boot/dts/myir/myb*.dtb $FIRMWARE_DIR/
 
-cp -ub $OUTPUT_DIR/arch/arm64/boot/Image  /tftp
-cp -ub $OUTPUT_DIR/arch/arm64/boot/dts/myir/myb*.dtb /tftp
+cp -u $OUTPUT_DIR/arch/arm64/boot/Image  /tftp
+cp -u $OUTPUT_DIR/arch/arm64/boot/dts/myir/myb*.dtb /tftp
 
 fi

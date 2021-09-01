@@ -45,8 +45,7 @@
 			fsl,pins = <
 				MX8MM_IOMUXC_SAI5_RXD2_GPIO3_IO23       0x19 //+5V poweron
 			>;
-		};
-                
+		};                
 
                 ilitek_ili2131_pins:pinctrl_ili2131grp {
                         fsl,pins = <
@@ -89,6 +88,7 @@
         ilitek,irq-gpio = <&gpio4 1 IRQ_TYPE_EDGE_FALLING>; 
         ilitek,reset-gpio = <&gpio1 12 GPIO_ACTIVE_HIGH>; 
         ilitek,name = "ilitek_i2c"; 
+
 
         touchscreen-swapped-x-y;
         touchscreen-revert-y;
