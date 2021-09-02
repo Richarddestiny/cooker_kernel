@@ -85,18 +85,21 @@
 	reg_vmmc: _regulator {
 		compatible = "regulator-fixed";
 		regulator-name = "WLAN_EN";
+		pinctrl-0 = <&pinctrl_wifipwr>;		
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		gpio = <&gpio1 15 GPIO_ACTIVE_HIGH>;
 		// off-on-delay-us = <20000>;
 		startup-delay-us = <100>;
 		enable-active-high;
+		
 	};
 
 	regulators {
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <0>;
+		pinctrl-0 = <&pinctrl_wifipwr>;
 
 		reg_wm8904_amp: regulator@4 {
 			compatible = "regulator-fixed";
@@ -114,9 +117,9 @@
             regulator-name = "wifi-pwr";
             regulator-min-microvolt = <3300000>;
             regulator-max-microvolt = <3300000>;
-            gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
+            gpios = <&gpio4 0 GPIO_ACTIVE_HIGH>;
             regulator-boot-on;
-            enable-active-low;
+            enable-active-high;
 		};
 
 		reg_usb_ltemodule: regulator@2 {
@@ -396,8 +399,8 @@
     keep-power-in-suspend;
     // enable-sdio-wakeup;
 	non-removable;
-	//status = "okay";
-	status = "disable";
+	status = "okay";
+//	status = "disable";
 };
 
 &usdhc2 {
@@ -973,6 +976,13 @@
 	pinctrl_wdog: wdoggrp {
 		fsl,pins = <
 			MX8MM_IOMUXC_GPIO1_IO02_WDOG1_WDOG_B	0xc6
+		>;
+	};
+
+	pinctrl_wifipwr:wifipwr {
+		fsl,pins = <
+			MX8MM_IOMUXC_GPIO1_IO15_GPIO1_IO15 0x19
+			MX8MM_IOMUXC_SAI1_RXFS_GPIO4_IO0 0x19
 		>;
 	};
 

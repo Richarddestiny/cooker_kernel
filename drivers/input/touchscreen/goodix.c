@@ -724,33 +724,33 @@ static const struct attribute_group goodix_attr_group = {
 	.attrs = goodix_attrs,
 };
 
-static int goodix_open(struct input_dev *input_dev)
-{
-	struct goodix_ts_data *ts = input_get_drvdata(input_dev);
-	int error;
+// static int goodix_open(struct input_dev *input_dev)
+// {
+// 	struct goodix_ts_data *ts = input_get_drvdata(input_dev);
+// 	int error;
 
-	if (!ts->gpiod_int || !ts->gpiod_rst)
-		return 0;
+// 	if (!ts->gpiod_int || !ts->gpiod_rst)
+// 		return 0;
 
-	wait_for_completion(&ts->firmware_loading_complete);
+// 	wait_for_completion(&ts->firmware_loading_complete);
 
-	error = goodix_set_power_state(ts, true);
-	if (error)
-		return error;
-	atomic_inc(&ts->open_count);
-	return 0;
-}
+// 	error = goodix_set_power_state(ts, true);
+// 	if (error)
+// 		return error;
+// 	atomic_inc(&ts->open_count);
+// 	return 0;
+// }
 
-static void goodix_close(struct input_dev *input_dev)
-{
-	struct goodix_ts_data *ts = input_get_drvdata(input_dev);
+// static void goodix_close(struct input_dev *input_dev)
+// {
+// 	struct goodix_ts_data *ts = input_get_drvdata(input_dev);
 
-	if (!ts->gpiod_int || !ts->gpiod_rst)
-		return;
+// 	if (!ts->gpiod_int || !ts->gpiod_rst)
+// 		return;
 
-	goodix_set_power_state(ts, false);
-	atomic_dec(&ts->open_count);
-}
+// 	goodix_set_power_state(ts, false);
+// 	atomic_dec(&ts->open_count);
+// }
 
 /**
  * goodix_get_gpio_config - Get GPIO config from ACPI/DT
@@ -854,7 +854,7 @@ static void goodix_read_config(struct goodix_ts_data *ts)
 		swap(ts->abs_x_max, ts->abs_y_max);
 	ts->int_trigger_type = config[TRIGGER_LOC] & 0x03;
 	ts->max_touch_num = config[MAX_CONTACTS_LOC] & 0x0f;
-	dev_err(&ts->client->dev, "abs_x: %d abs_y:%d trigertype:%#X touch_num:%d\n", ts->abs_x_max, ts->abs_y_max, ts->max_touch_num);
+	
 	if (!ts->abs_x_max || !ts->abs_y_max || !ts->max_touch_num) {
 		dev_err(&ts->client->dev,
 			"Invalid config, using defaults\n");
@@ -1084,46 +1084,46 @@ static int goodix_finish_setup(struct goodix_ts_data *ts)
  * initialization of the device. This will only be called
  * when ts->gpiod_int and ts->gpiod_rst are properly initialized.
  */
-static void goodix_config_cb(const struct firmware *cfg, void *ctx)
-{
-	struct goodix_ts_data *ts = ctx;
-	int error;
+// static void goodix_config_cb(const struct firmware *cfg, void *ctx)
+// {
+// 	struct goodix_ts_data *ts = ctx;
+// 	int error;
 
-	// if (cfg) {
-	// 	/* send device configuration to the firmware */
-	// 	error = goodix_send_cfg(ts, cfg);
-	// 	if (error)
-	// 		goto err_release_cfg;
-	// }
+// 	// if (cfg) {
+// 	// 	/* send device configuration to the firmware */
+// 	// 	error = goodix_send_cfg(ts, cfg);
+// 	// 	if (error)
+// 	// 		goto err_release_cfg;
+// 	// }
 
-	error = goodix_configure_dev(ts);
-	if (error)
-		goto err_release_cfg;
+// 	error = goodix_configure_dev(ts);
+// 	if (error)
+// 		goto err_release_cfg;
 
-	goodix_enable_esd(ts);
+// 	goodix_enable_esd(ts);
 
-	pm_runtime_set_autosuspend_delay(&ts->client->dev,
-					 GOODIX_AUTOSUSPEND_DELAY_MS);
-	pm_runtime_use_autosuspend(&ts->client->dev);
-	error = pm_runtime_set_active(&ts->client->dev);
-	if (error) {
-		dev_err(&ts->client->dev, "failed to set active: %d\n", error);
-		goto err_release_cfg;
-	}
-	pm_runtime_enable(&ts->client->dev);
-	/* Must not suspend immediately after device initialization */
-	pm_runtime_mark_last_busy(&ts->client->dev);
-	pm_request_autosuspend(&ts->client->dev);
+// 	pm_runtime_set_autosuspend_delay(&ts->client->dev,
+// 					 GOODIX_AUTOSUSPEND_DELAY_MS);
+// 	pm_runtime_use_autosuspend(&ts->client->dev);
+// 	error = pm_runtime_set_active(&ts->client->dev);
+// 	if (error) {
+// 		dev_err(&ts->client->dev, "failed to set active: %d\n", error);
+// 		goto err_release_cfg;
+// 	}
+// 	pm_runtime_enable(&ts->client->dev);
+// 	/* Must not suspend immediately after device initialization */
+// 	pm_runtime_mark_last_busy(&ts->client->dev);
+// 	pm_request_autosuspend(&ts->client->dev);
 
-	release_firmware(cfg);
-	complete_all(&ts->firmware_loading_complete);
-	goodix_finish_setup(ts);
-	return;
+// 	release_firmware(cfg);
+// 	complete_all(&ts->firmware_loading_complete);
+// 	goodix_finish_setup(ts);
+// 	return;
 
-err_release_cfg:
-	release_firmware(cfg);
-	complete_all(&ts->firmware_loading_complete);
-}
+// err_release_cfg:
+// 	release_firmware(cfg);
+// 	complete_all(&ts->firmware_loading_complete);
+// }
 
 static int goodix_ts_probe(struct i2c_client *client,
 			   const struct i2c_device_id *id)
@@ -1221,9 +1221,9 @@ static int goodix_ts_probe(struct i2c_client *client,
 	}
 	return 0;
 
-err_sysfs_remove_group:
-	if (ts->gpiod_int && ts->gpiod_rst)
-		sysfs_remove_group(&client->dev.kobj, &goodix_attr_group);
+// err_sysfs_remove_group:
+// 	if (ts->gpiod_int && ts->gpiod_rst)
+// 		sysfs_remove_group(&client->dev.kobj, &goodix_attr_group);
 	return error;
 }
 
