@@ -92,6 +92,7 @@
 		// off-on-delay-us = <20000>;
 		startup-delay-us = <100>;
 		enable-active-high;
+		regulator-boot-on;
 		
 	};
 
@@ -576,9 +577,14 @@
 	
 	};
 
-	rtc: rtc@32 {
+	rtc_rx8025: rtc@32 {
 		compatible = "epson,rx8025";
 		reg = <0x32>;
+	};
+
+	rtc_pcf8563: rtc@51 {
+		compatible = "nxp,pcf8563";
+		reg = <0x51>;
 	};
 
 	ov5640_mipi: ov5640_mipi@3c {
