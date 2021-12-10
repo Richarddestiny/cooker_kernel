@@ -27,7 +27,8 @@ if [ $# -ne 0 ];then
 		LDFLAGS="" CC=$CC  make O=$OUTPUT_DIR  savedefconfig
 		cp $OUTPUT_DIR/defconfig  $KERNEL_DIR/arch/arm64/configs/cooker_imx8mm_defconfig
 	elif [ $1 == "defconfig" ];then
-		make O=$OUTPUT_DIR cooker_imx8mm_defconfig
+#		make O=$OUTPUT_DIR cooker_imx8mm_defconfig
+		make O=$OUTPUT_DIR myd_imx8mm_defconfig
 	fi
 else
 

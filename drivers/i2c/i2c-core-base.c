@@ -2041,7 +2041,7 @@ int i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 	ret = __i2c_lock_bus_helper(adap);
 	if (ret)
 		return ret;
-	
+
 	ret = __i2c_transfer(adap, msgs, num);
 	i2c_unlock_bus(adap, I2C_LOCK_SEGMENT);
 

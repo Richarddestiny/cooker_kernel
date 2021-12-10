@@ -1,8 +1,17 @@
+// SPDX-License-Identifier: GPL-2.0
 /*
- * MYiR drm driver -  MIPI-DSI panel driver
+ * i.MX drm driver - Raydium MIPI-DSI panel driver
  *
- * Copyright 2019 MYiR Devices
+ * Copyright (C) 2017 NXP
  *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  */
 
 #include <drm/drmP.h>
@@ -20,8 +29,9 @@
 #include <linux/of_gpio.h>
 #include <linux/regmap.h>
 
-#include <drm/bridge/sec_mipi_dsim.h>
 
+/* Write Manufacture Command Set Control */
+#define WRMAUCCTR 0xFE
 
 #define UPDATE(x, h, l) (((x) << (l)) & GENMASK((h), (l)))
 
@@ -254,13 +264,13 @@ typedef struct tc358775_configure
 static const struct display_timing tc358775_default_timing = {
 	.pixelclock = {68000000, 70000000, 80000000},
 	.hactive = {1280, 1280, 1280},
-	.hfront_porch = {100, 100, 100},
-	.hsync_len = {8, 8, 8},
-	.hback_porch = {45, 45, 45},
+	.hfront_porch = {60, 60, 60},
+	.hsync_len = {17, 17, 17},
+	.hback_porch = {60, 60, 60},
 	.vactive = {800, 800, 800},
-	.vfront_porch = {4, 4, 4},
-	.vsync_len = {1, 1, 1},
-	.vback_porch = {4, 4, 4},
+	.vfront_porch = {10, 10, 10},
+	.vsync_len = {3, 3, 3},
+	.vback_porch = {10, 10, 10},
 
 	.flags = DISPLAY_FLAGS_HSYNC_LOW |
 			 DISPLAY_FLAGS_VSYNC_LOW |
@@ -291,6 +301,11 @@ static const struct display_timing tc358775_default_timing = {
 
 #endif
 
+static const u32 tc358775_bus_formats[] = {
+	MEDIA_BUS_FMT_RGB888_1X24,
+	MEDIA_BUS_FMT_RGB666_1X18,
+	MEDIA_BUS_FMT_RGB565_1X16,
+};
 
 struct tc358775_panel
 {
@@ -300,11 +315,10 @@ struct tc358775_panel
 	struct gpio_desc *stby;
 	struct gpio_desc *reset;
 	struct gpio_desc *power_gpio;
+	struct backlight_device *backlight;
 
 	bool prepared;
 	bool enabled;
-
-	struct backlight_device *backlight;
 
 	struct videomode vm;
 	u32 width_mm;
@@ -384,8 +398,7 @@ static bool tc358775_writeable_reg(struct device *dev, unsigned int reg)
 
 static int color_format_from_dsi_format(enum mipi_dsi_pixel_format format)
 {
-	switch (format)
-	{
+	switch (format) {
 	case MIPI_DSI_FMT_RGB565:
 		return 0x55;
 	case MIPI_DSI_FMT_RGB666:
@@ -406,10 +419,10 @@ static int tc358775_configure(struct tc358775_panel *tc, struct drm_panel *panel
 	//	u32 idreg, pclksel = 0, pclkdiv = 0;
 	//	u32 lvis = 1, lvfs = 0, lvnd = 6, vsdelay = 5, lv_prbs_on = 4,dual_link = 0,debug = 0;
 	u32 debug = 0;
+	u32 set_color_key = 1;
 	//u32 ppi_tx_rx_ta,ppi_lptxtimecnt,ppi_d0s_clrsipocount,ppi_d1s_clrsipocount,ppi_d2s_clrsipocount,ppi_d3s_clrsipocount;
 	u8 chipid, revid;
 	int ret=0;
-	u32 set_color_key = 1;
 
 	/* make sure in LP mode */
 	ret = mipi_dsi_dcs_nop(dsi);
@@ -500,16 +513,14 @@ static int tc358775_configure(struct tc358775_panel *tc, struct drm_panel *panel
 	of_property_read_u32(tc->dev->of_node, "toshiba,set_color_key", &set_color_key);
 	if (set_color_key)
 	{
-	   regmap_write(tc->regmap, LVMX0003, tc->tc35775_cfg.lvmx0003);
-	   regmap_write(tc->regmap, LVMX0407, tc->tc35775_cfg.lvmx0407);
-	   regmap_write(tc->regmap, LVMX0811, tc->tc35775_cfg.lvmx0811);
-	   regmap_write(tc->regmap, LVMX1215, tc->tc35775_cfg.lvmx1215);
-	   regmap_write(tc->regmap, LVMX1619, tc->tc35775_cfg.lvmx1619);
-	   regmap_write(tc->regmap, LVMX2023, tc->tc35775_cfg.lvmx2023);
-	   regmap_write(tc->regmap, LVMX2427, tc->tc35775_cfg.lvmx2427);
+		regmap_write(tc->regmap, LVMX0003, tc->tc35775_cfg.lvmx0003);
+		regmap_write(tc->regmap, LVMX0407, tc->tc35775_cfg.lvmx0407);
+		regmap_write(tc->regmap, LVMX0811, tc->tc35775_cfg.lvmx0811);
+		regmap_write(tc->regmap, LVMX1215, tc->tc35775_cfg.lvmx1215);
+		regmap_write(tc->regmap, LVMX1619, tc->tc35775_cfg.lvmx1619);
+		regmap_write(tc->regmap, LVMX2023, tc->tc35775_cfg.lvmx2023);
+		regmap_write(tc->regmap, LVMX2427, tc->tc35775_cfg.lvmx2427);
 	}
-
-
 	regmap_write(tc->regmap, LVCFG, tc->tc35775_cfg.lvcfg);
 #if 0
 	/* tc3587755 base parameter */
@@ -578,29 +589,67 @@ static int tc358775_configure(struct tc358775_panel *tc, struct drm_panel *panel
 
 	return ret;
 }
+static int tc358775_panel_prepare(struct drm_panel *panel)
+{
+	struct tc358775_panel *tc358775 = to_tc358775_panel(panel);
+
+	if (tc358775->prepared)
+		return 0;
+	printk("[%s]\n",__FUNCTION__);
+	#if 0
+	if (tc358775->reset != NULL && tc358775->stby !=NULL /* && tc358775->power_gpio !=NULL */) {
+		printk("duxy test %s %d\n",__FUNCTION__,__LINE__);
+		/* Power-On  Sequence */
+		/*
+		 gpiod_set_value(tc358775->power_gpio, 0);
+		 */
+		 gpiod_set_value(tc358775->reset, 0);
+		 gpiod_set_value(tc358775->stby, 0);
+		 msleep(5);
+		 /*
+		 gpiod_set_value(tc358775->power_gpio, 1);
+		 msleep(10);
+		 */
+		 gpiod_set_value(tc358775->stby, 1);
+		 msleep(10);
+		 gpiod_set_value(tc358775->reset, 1);
+		 
+
+	}
+	#endif
+	tc358775->prepared = true;
+
+	return 0;
+}
 
 static int tc358775_panel_unprepare(struct drm_panel *panel)
 {
+	
 	struct tc358775_panel *tc358775 = to_tc358775_panel(panel);
 	struct mipi_dsi_device *dsi = tc358775->dsi;
-//	struct device *dev = &dsi->dev;
+	//	struct mipi_dsi_device *dsi = tc->dsi;
+	struct device *dev = &dsi->dev;
 	int ret = 0;
+	//	int ret = 0,idreg=0,cnt=0;
+	//	u8 chipid, revid;
 
 	if (!tc358775->prepared)
 		return 0;
 
+	DRM_DEV_DEBUG_DRIVER(dev, "\n");
+#if 0
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
 	ret = mipi_dsi_dcs_set_display_off(dsi);
 	if (ret < 0)
-		DRM_WARN("Failed to set display OFF (%d)\n", ret);
+		DRM_DEV_ERROR(dev, "Failed to set display OFF (%d)\n", ret);
 
 	usleep_range(5000, 10000);
 
 	ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
 	if (ret < 0)
-		DRM_WARN("Failed to enter sleep mode (%d)\n", ret);
+		DRM_DEV_ERROR(dev, "Failed to enter sleep mode (%d)\n", ret);
 
 	usleep_range(10000, 15000);
 
@@ -609,161 +658,152 @@ static int tc358775_panel_unprepare(struct drm_panel *panel)
 		gpiod_set_value(tc358775->reset, 1);
 		usleep_range(10000, 15000);
 	}
-
-	tc358775->prepared = false;
+#endif
 
 	if (tc358775->reset != NULL && tc358775->stby !=NULL && tc358775->power_gpio !=NULL) {
 		/* Power-Off Sequence */
-		gpiod_set_value(tc358775->reset, 0);
-		msleep(2);
-		gpiod_set_value(tc358775->stby, 0);
-		msleep(3);
-		gpiod_set_value(tc358775->power_gpio, 0);
-		msleep(2);
-	}
-	
-	return 0;
-}
-
-static int tc358775_panel_prepare(struct drm_panel *panel)
-{
-	struct tc358775_panel *tc358775 = to_tc358775_panel(panel);
-
-	if (tc358775->prepared)
-		return 0;
-	
-
-   if (tc358775->reset != NULL && tc358775->stby !=NULL && tc358775->power_gpio !=NULL) {
-	   /* Power-On  Sequence */
-		gpiod_set_value(tc358775->power_gpio, 0);
-		gpiod_set_value(tc358775->reset, 0);
-		gpiod_set_value(tc358775->stby, 0);
 		
-		msleep(5);
-		gpiod_set_value(tc358775->power_gpio, 1);
+		gpiod_set_value(tc358775->reset, 0);
+		msleep(2);
+		gpiod_set_value(tc358775->stby, 0);
 		msleep(3);
-		gpiod_set_value(tc358775->stby, 1);
-		msleep(1);
-		gpiod_set_value(tc358775->reset, 1);
+		gpiod_set_value(tc358775->power_gpio, 0);
+		msleep(2);
+		
 	}
 
-	tc358775->prepared = true;	
+	tc358775->prepared = false;
+
 	return 0;
 }
-
 
 static int tc358775_panel_enable(struct drm_panel *panel)
 {
 	struct tc358775_panel *tc358775 = to_tc358775_panel(panel);
-	struct device *dev = &tc358775->dsi->dev;
 	struct mipi_dsi_device *dsi = tc358775->dsi;
+	struct device *dev = &dsi->dev;
 	int color_format = color_format_from_dsi_format(dsi->format);
-	int ret = -1;
+	u16 brightness;
+	int ret;
 
 	if (tc358775->enabled)
 		return 0;
 
-//	if (!tc358775->prepared)
-//		return 0;
-	
-	ret=tc358775_configure(tc358775, panel);
-    if(ret<0){
-		DRM_DEV_ERROR(dev, "Failed to configure tc358 \n");
+	if (!tc358775->prepared) {
+		DRM_DEV_ERROR(dev, "Panel not prepared!\n");
+		return -EPERM;
 	}
-	
-	/* Software reset */
-	ret = mipi_dsi_dcs_soft_reset(dsi);
-	if (ret < 0)
-	{
-		DRM_DEV_ERROR(dev, "Failed to do Software Reset (%d)\n", ret);
+	printk("[%s]\n",__FUNCTION__);
+
+	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+	ret=tc358775_configure(tc358775, panel);
+	if (ret < 0) {
+		DRM_DEV_ERROR(dev, "Failed to send MCS (%d)\n", ret);
 		goto fail;
 	}
 
-	usleep_range(10000, 15000);
+
+	/* Software reset */
+		ret = mipi_dsi_dcs_soft_reset(dsi);
+		if (ret < 0) {
+			DRM_DEV_ERROR(dev, "Failed to do Software Reset (%d)\n", ret);
+			goto fail;
+		}
+
 
 	/* Set DSI mode */
-	ret = mipi_dsi_generic_write(dsi, (u8[]){0xC2, 0x0B}, 2);
-	if (ret < 0)
-	{
+	ret = mipi_dsi_generic_write(dsi, (u8[]){ 0xC2, 0x0B }, 2);
+	if (ret < 0) {
 		DRM_DEV_ERROR(dev, "Failed to set DSI mode (%d)\n", ret);
 		goto fail;
 	}
 	/* Set tear ON */
 	ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
-	if (ret < 0)
-	{
+	if (ret < 0) {
 		DRM_DEV_ERROR(dev, "Failed to set tear ON (%d)\n", ret);
 		goto fail;
 	}
 	/* Set tear scanline */
 	ret = mipi_dsi_dcs_set_tear_scanline(dsi, 0x380);
-	if (ret < 0)
-	{
-		DRM_DEV_ERROR(dev, "Failed to set tear scanline 111 (%d)\n", ret);
+	if (ret < 0) {
+		DRM_DEV_ERROR(dev, "Failed to set tear scanline (%d)\n", ret);
 		goto fail;
 	}
 	/* Set pixel format */
 	ret = mipi_dsi_dcs_set_pixel_format(dsi, color_format);
 	DRM_DEV_DEBUG_DRIVER(dev, "Interface color format set to 0x%x\n",
-						 color_format);
-	if (ret < 0)
-	{
+				color_format);
+	if (ret < 0) {
 		DRM_DEV_ERROR(dev, "Failed to set pixel format (%d)\n", ret);
 		goto fail;
 	}
 	/* Set display brightness */
 	ret = mipi_dsi_dcs_set_display_brightness(dsi, 0x20);
-	if (ret < 0)
-	{
+	if (ret < 0) {
 		DRM_DEV_ERROR(dev, "Failed to set display brightness (%d)\n",
-					  ret);
+			      ret);
 		goto fail;
 	}
-
-	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+	/* Exit sleep mode */
 	ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
-	if (ret < 0)
-	{
+	if (ret < 0) {
 		DRM_DEV_ERROR(dev, "Failed to exit sleep mode (%d)\n", ret);
-		goto fail;
-	}
-	msleep(20);
-	ret = mipi_dsi_dcs_set_display_on(dsi);
-	if (ret < 0)
-	{
-		DRM_DEV_ERROR(dev, "Failed to exit sleep mode (%d)\n", ret);
-		goto fail;
-	}
-	msleep(5);
-	//ret = mipi_dsi_dcs_set_tear_on(dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
-	if (ret < 0)
-	{
-		DRM_DEV_ERROR(dev, "Failed to set tear ON (%d)\n", ret);
 		goto fail;
 	}
 
-	backlight_enable(tc358775->backlight);
+	usleep_range(5000, 10000);
+
+	ret = mipi_dsi_dcs_set_display_on(dsi);
+	if (ret < 0) {
+		DRM_DEV_ERROR(dev, "Failed to set display ON (%d)\n", ret);
+		goto fail;
+	}
+
+	DRM_DEV_DEBUG_DRIVER(dev, "\n");
+	tc358775->backlight->props.power = FB_BLANK_UNBLANK;
+	backlight_update_status(tc358775->backlight);
 
 	tc358775->enabled = true;
-	
+
 	return 0;
 
 fail:
-	
-	return -1;
+	if (tc358775->reset != NULL)
+		gpiod_set_value(tc358775->reset, 0);
+
+	return ret;
 }
 
 static int tc358775_panel_disable(struct drm_panel *panel)
 {
 	struct tc358775_panel *tc358775 = to_tc358775_panel(panel);
-//	struct device *dev = &tc358775->dsi->dev;
-//	struct mipi_dsi_device *dsi = tc358775->dsi;
-	int ret=0;
+	struct mipi_dsi_device *dsi = tc358775->dsi;
+	struct device *dev = &dsi->dev;
+	int ret;
 
 	if (!tc358775->enabled)
 		return 0;
 
-	backlight_disable(tc358775->backlight);
+	DRM_DEV_DEBUG_DRIVER(dev, "\n");
+	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+	tc358775->backlight->props.power = FB_BLANK_POWERDOWN;
+	backlight_update_status(tc358775->backlight);
+
+
+	ret = mipi_dsi_dcs_set_display_off(dsi);
+	if (ret < 0) {
+		DRM_DEV_ERROR(dev, "Failed to set display OFF (%d)\n", ret);
+		return ret;
+	}
+	usleep_range(5000, 10000);
+
+	ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
+	if (ret < 0) {
+		DRM_DEV_ERROR(dev, "Failed to enter sleep mode (%d)\n", ret);
+		return ret;
+	}
 
 	tc358775->enabled = false;
 
@@ -781,8 +821,7 @@ static int tc358775_panel_get_modes(struct drm_panel *panel)
 	int ret;
 
 	mode = drm_mode_create(connector->dev);
-	if (!mode)
-	{
+	if (!mode) {
 		DRM_DEV_ERROR(dev, "Failed to create display mode!\n");
 		return 0;
 	}
@@ -813,33 +852,18 @@ static int tc358775_panel_get_modes(struct drm_panel *panel)
 	return 1;
 }
 
-static int tc358775_panel_bl_update_status(struct backlight_device *bl)
+static int tc358775_bl_get_brightness(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
-	struct tc358775_panel *panel=mipi_dsi_get_drvdata(dsi);
-	int ret = 0;
-
-	if (!panel->prepared)
-		return 0;
-
-	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
-
-	ret = mipi_dsi_dcs_set_display_brightness(dsi, bl->props.brightness);
-	if (ret < 0)
-		return ret;
-
-	return 0;
-}
-
-static int tc358775_panel_bl_get_brightness(struct backlight_device *bl)
-{
-	struct mipi_dsi_device *dsi = bl_get_data(bl);
-	struct tc358775_panel *panel=mipi_dsi_get_drvdata(dsi);
+	struct tc358775_panel *tc358775 = mipi_dsi_get_drvdata(dsi);
+	struct device *dev = &dsi->dev;
 	u16 brightness;
 	int ret;
 
-	if (!panel->prepared)
+	if (!tc358775->prepared)
 		return 0;
+
+	DRM_DEV_DEBUG_DRIVER(dev, "\n");
 
 	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 
@@ -852,10 +876,30 @@ static int tc358775_panel_bl_get_brightness(struct backlight_device *bl)
 	return brightness & 0xff;
 }
 
+static int tc358775_bl_update_status(struct backlight_device *bl)
+{
+	struct mipi_dsi_device *dsi = bl_get_data(bl);
+	struct tc358775_panel *tc358775 = mipi_dsi_get_drvdata(dsi);
+	struct device *dev = &dsi->dev;
+	int ret = 0;
+
+	if (!tc358775->prepared)
+		return 0;
+
+	DRM_DEV_DEBUG_DRIVER(dev, "New brightness: %d\n", bl->props.brightness);
+
+	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
+
+	ret = mipi_dsi_dcs_set_display_brightness(dsi, bl->props.brightness);
+	if (ret < 0)
+		return ret;
+
+	return 0;
+}
 
 static const struct backlight_ops tc358775_bl_ops = {
-	.update_status = tc358775_panel_bl_update_status,
-	.get_brightness = tc358775_panel_bl_get_brightness,
+	.update_status = tc358775_bl_update_status,
+	.get_brightness = tc358775_bl_get_brightness,
 };
 
 static const struct drm_panel_funcs tc358775_panel_funcs = {
@@ -866,17 +910,20 @@ static const struct drm_panel_funcs tc358775_panel_funcs = {
 	.get_modes = tc358775_panel_get_modes,
 };
 
+
+
 static int tc358775_panel_probe(struct mipi_dsi_device *dsi)
 {
 	struct device *dev = &dsi->dev;
 	struct device_node *np = dev->of_node;
-	struct device_node *client_node = NULL;
 	struct device_node *timings;
+	struct device_node *client_node = NULL;
 	struct i2c_client *client_dev;
 	struct tc358775_panel *panel;
-	struct backlight_properties bl_props;
-	
+	struct device_node *backlight;
 	int ret;
+	u32 video_mode;
+
 	panel = devm_kzalloc(&dsi->dev, sizeof(*panel), GFP_KERNEL);
 	if (!panel)
 		return -ENOMEM;
@@ -885,40 +932,69 @@ static int tc358775_panel_probe(struct mipi_dsi_device *dsi)
 
 	panel->dsi = dsi;
 	panel->dev = dev;
+
 	dsi->format = MIPI_DSI_FMT_RGB888;
-	dsi->mode_flags = MIPI_DSI_MODE_VIDEO_BURST | MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_LPM;
+//	dsi->mode_flags =  MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO |
+//			   MIPI_DSI_CLOCK_NON_CONTINUOUS;
+	dsi->mode_flags = MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_VIDEO ;
+
+	ret = of_property_read_u32(np, "video-mode", &video_mode);
+	if (!ret) {
+		switch (video_mode) {
+		case 0:
+			/* burst mode */
+			dsi->mode_flags |= MIPI_DSI_MODE_VIDEO_BURST;
+			break;
+		case 1:
+			/* non-burst mode with sync event */
+			break;
+		case 2:
+			/* non-burst mode with sync pulse */
+			dsi->mode_flags |= MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
+			break;
+		default:
+			dev_warn(dev, "invalid video mode %d\n", video_mode);
+			break;
+
+		}
+	}
 
 	ret = of_property_read_u32(np, "dsi-lanes", &dsi->lanes);
-	if (ret < 0)
-	{
+	if (ret < 0) {
 		dev_err(dev, "Failed to get dsi-lanes property (%d)\n", ret);
 		return ret;
 	}
 
+	/*
+	 * 'display-timings' is optional, so verify if the node is present
+	 * before calling of_get_videomode so we won't get console error
+	 * messages
+	 */
 	timings = of_get_child_by_name(np, "display-timings");
-	if (timings)
-	{
+	if (timings) {
 		of_node_put(timings);
 		ret = of_get_videomode(np, &panel->vm, 0);
-	}
-	else
-	{
+	} else {
 		videomode_from_timing(&tc358775_default_timing, &panel->vm);
 	}
+	if (ret < 0)
+		return ret;
 
 	of_property_read_u32(np, "panel-width-mm", &panel->width_mm);
 	of_property_read_u32(np, "panel-height-mm", &panel->height_mm);
 
+
+
+	panel->power_gpio= devm_gpiod_get(dev, "powergpio", GPIOD_OUT_LOW);
+	if (IS_ERR(panel->power_gpio))
+		panel->power_gpio = NULL;
+	
 	panel->stby = devm_gpiod_get(dev, "stby", GPIOD_OUT_HIGH);
 	if (IS_ERR(panel->stby))
 		panel->stby = NULL;
 
 	panel->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(panel->reset))
-		panel->reset = NULL;
-
-	panel->power_gpio= devm_gpiod_get(dev, "powergpio", GPIOD_OUT_LOW);
-	if (IS_ERR(panel->power_gpio))
 		panel->reset = NULL;
 
 	client_node = of_parse_phandle(dev->of_node, "client-device", 0);
@@ -947,18 +1023,11 @@ static int tc358775_panel_probe(struct mipi_dsi_device *dsi)
 		}
 	}
 
-	memset(&bl_props, 0, sizeof(bl_props));
-	bl_props.type = BACKLIGHT_RAW;
-	bl_props.brightness = 255;
-	bl_props.max_brightness = 255;
-
-	panel->backlight = devm_backlight_device_register(dev, dev_name(dev),
-							  dev, dsi, &tc358775_bl_ops,
-							  &bl_props);
-	if (IS_ERR(panel->backlight)) {
-		ret = PTR_ERR(panel->backlight);
-		dev_err(dev, "Failed to register backlight (%d)\n", ret);
-		return ret;
+	backlight = of_parse_phandle(dev->of_node, "backlight", 0);
+	if (backlight)
+	{
+		panel->backlight = of_find_backlight_by_node(backlight);
+		of_node_put(backlight);
 	}
 
 	drm_panel_init(&panel->base);
@@ -1013,7 +1082,8 @@ static const struct of_device_id tc358775_of_match[] = {
 	{
 		.compatible = "toshiba,panel-tc358775",
 	},
-	{}};
+	{}
+};
 MODULE_DEVICE_TABLE(of, tc358775_of_match);
 
 static struct mipi_dsi_driver tc358775_panel_driver = {
@@ -1027,6 +1097,6 @@ static struct mipi_dsi_driver tc358775_panel_driver = {
 };
 module_mipi_dsi_driver(tc358775_panel_driver);
 
-MODULE_AUTHOR("MYiR alex.hu");
-MODULE_DESCRIPTION("TOSHIBA TC358775 PANEL");
+MODULE_AUTHOR("Robert Chiras <robert.chiras@nxp.com>");
+MODULE_DESCRIPTION("DRM Driver for Raydium RM67191 MIPI DSI panel");
 MODULE_LICENSE("GPL v2");

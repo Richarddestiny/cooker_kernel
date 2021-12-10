@@ -74,6 +74,7 @@ config DRM_PANEL_ZY_GH8555BL
 	  Say Y if you want to enable support for panels based on the
 	  ZY GH8555BL controller.
 
+
 config DRM_PANEL_ILITEK_ILI9881C
 	tristate "Ilitek ILI9881C-based panels"
 	depends on OF
@@ -383,4 +384,12 @@ config DRM_PANEL_TC358775
           Say Y here if you want to enable support for  TC358775 FHD
           DSI panel.
 
+config DRM_PANEL_TC358775_JX8MX_ONLY
+        tristate "TC358775 FHD panel JX8MX ONLY"
+        depends on OF
+        depends on DRM_MIPI_DSI
+        depends on BACKLIGHT_CLASS_DEVICE
+        help
+          Say Y here if you want to enable support for  TC358775 FHD
+          DSI panel.
 endmenu
