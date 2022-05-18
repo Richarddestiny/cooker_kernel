@@ -117,3 +117,4 @@ obj-$(CONFIG_TOUCHSCREEN_IQS5XX)	+= iqs5xx.o
 
 obj-y += ilitek_limv5_9_0_2/
 obj-y += goodix.o
+#obj-y += ilitek_limv5_9_0_5_zhunyi/

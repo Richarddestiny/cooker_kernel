@@ -82,23 +82,47 @@
 
 /* touch */
 &i2c3 {
-        clock_frequency = <400000>;
+        clock_frequency = <100000>;
         pinctrl-names = "default";
         status = "okay";
 
-        goodix_ts@14 {/*Goodix BLSP1 QUP5 */
-                compatible = "goodix,gt9xx";                                
-                pinctrl-names = "default";
-                pinctrl-0 = <&ilitek_ili2131_pins>;
-                reg = <0x14>;
+        // goodix_ts@14 {/*Goodix BLSP1 QUP5 */
+        //         compatible = "goodix,gt9xx";                                
+        //         pinctrl-names = "default";
+        //         pinctrl-0 = <&ilitek_ili2131_pins>;
+        //         reg = <0x14>;
                 
-                interrupt-parent = <&gpio4>;
-                interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
-              //  vdd_ana-supply = <&pm8226_l19>;
-             //   vcc_i2c-supply = <&pm8226_lvs1>;
-                reset-gpio = <&gpio1 12 GPIO_ACTIVE_HIGH>; 
-                irq-gpio = <&gpio4 1 GPIO_ACTIVE_HIGH>;                
-        };
+        //         interrupt-parent = <&gpio4>;
+        //         interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
+        //       //  vdd_ana-supply = <&pm8226_l19>;
+        //      //   vcc_i2c-supply = <&pm8226_lvs1>;
+        //         reset-gpio = <&gpio1 12 GPIO_ACTIVE_HIGH>; 
+        //         irq-gpio = <&gpio4 1 GPIO_ACTIVE_HIGH>;                
+        // };
+
+        ili2131: ili2131@41 { 
+        //compatible = "tchip,ilitek,zhunyi"; 
+         compatible = "tchip,ilitek"; 
+        reg = <0x41>; 
+        pinctrl-names = "default";
+        pinctrl-0 = <&ilitek_ili2131_pins>;
+
+        interrupt-parent = <&gpio4>; 
+        interrupts = <1 IRQ_TYPE_EDGE_FALLING>; 
+        ilitek,irq-gpio = <&gpio4 1 IRQ_TYPE_EDGE_FALLING>; 
+        ilitek,reset-gpio = <&gpio1 12 GPIO_ACTIVE_HIGH>; 
+        ilitek,name = "ilitek_i2c"; 
+
+
+        //touchscreen-swapped-x-y;
+      //  touchscreen-revert-y;
+        touchscreen-lcm-resolution;
+
+        touchscreen-lcm-resolution-x = <800>;
+        touchscreen-lcm-resolution-y = <1280>;
+
+
+        }; 
 
 };
 

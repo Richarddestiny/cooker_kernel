@@ -1218,7 +1218,7 @@ int ilitek_read_data_and_report_6XX(void) {
 				if (!(ilitek_data->touch_key_hold_press)) {
 					if (ilitek_data->tp[i].x > ilitek_data->screen_max_x || ilitek_data->tp[i].y > ilitek_data->screen_max_y ||
 							ilitek_data->tp[i].x < ilitek_data->screen_min_x || ilitek_data->tp[i].y < ilitek_data->screen_min_y) {
-						tp_log_info("Point (x > screen_max_x || y > screen_max_y) , ID=%02X, X=%d, Y=%d\n",
+						tp_log_debug("Point (x > screen_max_x || y > screen_max_y) , ID=%02X, X=%d, Y=%d\n",
 								ilitek_data->tp[i].id, ilitek_data->tp[i].x, ilitek_data->tp[i].y);
 					}
 					else {
